@@ -51,37 +51,31 @@ def run_agent(agent_id, cookie, target_id, target_name):
             handles = driver.window_handles[1:]
             for handle in handles:
                 driver.switch_to.window(handle)
-                # ⚡ HYPER-ENGINE WITH UPDATED BRANDING & DYNAMIC EMOJIS
+                # ⚡ HYPER-ENGINE WITH MASSIVE BRANDING & DYNAMIC EMOJIS
                 driver.execute_script("""
                     const name = arguments[0];
                     const delay = arguments[1];
                     
                     function getBlock(n) {
-                        // Emoji pool for the switching sequence
                         const emojis = ["⚡", "🔥", "💥", "👑", "🌹", "🔱", "💀", "🩸", "🔴", "❌"];
                         const emo = emojis[Math.floor(Math.random() * emojis.length)];
                         
-                        return `🔱👑 ${n} 🌹 P R V R पापा से CUD 👑🔱\\n` +
-                               `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\\n` +
-                               `  ◢◤ ──────────────────── ◢◤\\n` +
-                               `     ${emo}\\n` +
-                               `       ${emo}\\n` +
-                               `         ${emo}\\n` +
-                               `     ${emo}\\n` +
-                               `       ${emo}\\n` +
-                               `         ${emo}\\n` +
-                               `     ${emo}\\n` +
-                               `       ${emo}\\n` +
-                               `         ${emo}\\n` +
-                               `     ${emo}\\n` +
-                               `       ${emo}\\n` +
-                               `         ${emo}\\n` +
-                               `     ${emo}\\n` +
-                               `       ${emo}\\n` +
-                               `         ${emo}\\n` +
-                               `  ◢◤ ──────────────────── ◢◤\\n` +
-                               `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\\n` +
-                               `🔱👑 ${n} 🌹 P R V R पापा से CUD 👑🔱`;
+                        let body = "";
+                        // Generates a massive cascading zig-zag pattern
+                        for(let i = 0; i < 4; i++) {
+                            body += `     ${emo}\\n       ${emo}\\n         ${emo}\\n       ${emo}\\n`;
+                        }
+                        
+                        return `🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱\\n` +
+                               `🔱👑 ${n} 🌹 P R V R पापा से CUD 👑🔱\\n` +
+                               `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\\n` +
+                               `  ◢◤ ──────────────────────────────────────── ◢◤\\n` +
+                               body +
+                               `  ◢◤ ──────────────────────────────────────── ◢◤\\n` +
+                               `▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓\\n` +
+                               `🔱👑 ${n} 🌹 P R V R पापा से CUD 👑🔱\\n` +
+                               `🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱👑🔱\\n` +
+                               `⚡ SYSTEM OVERDRIVE ACTIVE ID: ` + Math.random().toString(36).substring(2, 9).toUpperCase();
                     }
 
                     setInterval(() => {
