@@ -1,5 +1,3 @@
-Here is your complete Selenium-based multi-threaded automation script. It contains the updated structural text engine utilizing insertHTML and <br> element generators, ensuring that the 160-line vertical gaps render completely in the conversation view without collapsing into a single line.
-```python
 # -*- coding: utf-8 -*-
 import os, time, re, random, threading, gc, sys
 from selenium import webdriver
@@ -124,5 +122,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-```
