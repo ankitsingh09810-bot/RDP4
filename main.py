@@ -8,7 +8,7 @@ from selenium_stealth import stealth
 
 # --- ⚙️ V100 TUNED SETTINGS ---
 THREADS = 2             
-PULSE_DELAY = 100       # Time in milliseconds between sends
+PULSE_DELAY = 100       
 SESSION_MAX_SEC = 120   
 TOTAL_DURATION = 25000  
 
@@ -36,6 +36,7 @@ def run_agent(agent_id, cookie, target_id, custom_msg):
     while (time.time() - global_start) < TOTAL_DURATION:
         driver = None
         try:
+            print(f"🚀 [Agent {agent_id}] Starting cycle...")
             driver = get_driver()
             driver.get("https://www.instagram.com/")
             
@@ -43,7 +44,7 @@ def run_agent(agent_id, cookie, target_id, custom_msg):
             driver.add_cookie({'name': 'sessionid', 'value': sid.strip(), 'domain': '.instagram.com'})
             
             driver.get(f"https://www.instagram.com/direct/t/{target_id}/")
-            time.sleep(5) # Wait for load
+            time.sleep(5) 
 
             driver.execute_script("""
                 const msg = arguments[0];
@@ -70,12 +71,13 @@ def run_agent(agent_id, cookie, target_id, custom_msg):
         finally:
             if driver: driver.quit()
             gc.collect() 
+            time.sleep(2)
 
 def main():
     cookie = os.environ.get("INSTA_COOKIE")
     target_id = os.environ.get("TARGET_THREAD_ID")
-    # This fetches the exact string with line breaks from GitHub Secrets
-    custom_message = os.environ.get("CUSTOM_MESSAGE", "Default Message")
+    # This retrieves the multi-line text from your GitHub Secret
+    custom_message = os.environ.get("CUSTOM_MESSAGE", "Default Text")
 
     if not cookie or not target_id:
         print("❌ Missing Secrets!")
@@ -84,94 +86,6 @@ def main():
     threads = []
     for i in range(THREADS):
         t = threading.Thread(target=run_agent, args=(i+1, cookie, target_id, custom_message))
-        t.start()
-        threads.append(t)
-        time.sleep(10)
-
-    for t in threads:
-        t.join()
-
-if __name__ == "__main__":
-    main()    while (time.time() - global_start) < TOTAL_DURATION:
-        driver = None
-        try:
-            print(f"🚀 [Agent {agent_id}] Starting 2-Min Cycle...")
-            driver = get_driver()
-            driver.get("https://www.instagram.com/")
-            
-            sid = re.search(r'sessionid=([^;]+)', cookie).group(1) if 'sessionid=' in cookie else cookie
-            driver.add_cookie({'name': 'sessionid', 'value': sid.strip(), 'domain': '.instagram.com'})
-            
-            for _ in range(TABS_PER_THREAD):
-                driver.execute_script(f"window.open('https://www.instagram.com/direct/t/{target_id}/', '_blank');")
-                time.sleep(2)
-
-            handles = driver.window_handles[1:]
-            for handle in handles:
-                driver.switch_to.window(handle)
-                # ⚡ HYPER-ENGINE: 20-LINE BLOCK GENERATOR
-                driver.execute_script("""
-                    const name = arguments[0];
-                    const delay = arguments[1];
-                    
-                    function getBlock(n) {
-                        // 💬 PASTE YOUR CUSTOM TEXT LINE INSIDE THE QUOTES BELOW:
-                        const CUSTOM_LINE = "(target) 𝚂ᴀ𝚈 【﻿ＰＲＶＲ】 𝐃ᴀᴅᴅ𝐘 ~⭕";
-                        
-                        // Dynamically replaces the placeholder tag with the target name if present
-                        let processedLine = CUSTOM_LINE.replace("(target)", n).replace("target", n);
-                        
-                        // Loops exactly 20 times to build the vertical stack
-                        let block = "";
-                        for(let i = 0; i < 20; i++) { 
-                            block += processedLine + "\\n"; 
-                        }
-                        
-                        // Appends a random identifier string to distinguish individual packets
-                        return block + "\\n⚡ ID: " + Math.random().toString(36).substring(7).toUpperCase();
-                    }
-
-                    setInterval(() => {
-                        const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
-                        if (box) {
-                            const text = getBlock(name);
-                            box.focus();
-                            document.execCommand('insertText', false, text);
-                            box.dispatchEvent(new Event('input', { bubbles: true }));
-
-                            const enter = new KeyboardEvent('keydown', {
-                                bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', keyCode: 13
-                            });
-                            box.dispatchEvent(enter);
-                            
-                            // Instantly wipes interface state to prevent RAM accumulation over time
-                            setTimeout(() => { if(box.innerHTML.length > 0) box.innerHTML = ""; }, 5);
-                        }
-                    }, delay);
-                """, target_name, PULSE_DELAY)
-
-            print(f"🔥 [Agent {agent_id}] 20-Line Pulse Active... (Reset in 120s)")
-            time.sleep(SESSION_MAX_SEC) 
-
-        except Exception as e:
-            print(f"⚠️ [Agent {agent_id}] Cycle Error: {e}")
-        finally:
-            if driver: driver.quit()
-            gc.collect() 
-            time.sleep(2)
-
-def main():
-    cookie = os.environ.get("INSTA_COOKIE")
-    target_id = os.environ.get("TARGET_THREAD_ID")
-    target_name = os.environ.get("TARGET_NAME", "TARGET")
-
-    if not cookie or not target_id:
-        print("❌ Missing Secrets!")
-        return
-
-    threads = []
-    for i in range(THREADS):
-        t = threading.Thread(target=run_agent, args=(i+1, cookie, target_id, target_name))
         t.start()
         threads.append(t)
         time.sleep(10)
