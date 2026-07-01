@@ -30,7 +30,7 @@ def get_driver():
     stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Linux armv8l", fix_hairline=True)
     return driver
 
-def run_agent(agent_id, cookie, target_id, target_name, custom_msg):
+def run_agent(agent_id, cookie, target_id, custom_msg):
     global_start = time.time()
     
     while (time.time() - global_start) < TOTAL_DURATION:
@@ -49,32 +49,25 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_msg):
             for handle in driver.window_handles[1:]:
                 driver.switch_to.window(handle)
                 driver.execute_script("""
-                    const name = arguments[0];
-                    const delay = arguments[1];
-                    const customMsg = arguments[2];
+                    const delay = arguments[0];
+                    const customMsg = arguments[1];
                     
-                    function getBlock(n) {
-                        let processedLine = customMsg.replace("(target)", n);
-                        let block = "";
-                        for(let i = 0; i < 20; i++) { block += processedLine + "\\n"; }
-                        return block + "\\n⚡ ID: " + Math.random().toString(36).substring(7).toUpperCase();
-                    }
-
                     setInterval(() => {
                         const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
                         if (box) {
-                            const text = getBlock(name);
                             box.focus();
-                            document.execCommand('insertText', false, text);
+                            document.execCommand('insertText', false, customMsg);
                             box.dispatchEvent(new Event('input', { bubbles: true }));
+                            
                             const enter = new KeyboardEvent('keydown', {
                                 bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', keyCode: 13
                             });
                             box.dispatchEvent(enter);
+                            
                             setTimeout(() => { if(box.innerHTML.length > 0) box.innerHTML = ""; }, 5);
                         }
                     }, delay);
-                """, target_name, PULSE_DELAY, custom_msg)
+                """, PULSE_DELAY, custom_msg)
 
             time.sleep(SESSION_MAX_SEC) 
         except Exception as e:
@@ -87,8 +80,6 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_msg):
 def main():
     cookie = os.environ.get("INSTA_COOKIE")
     target_id = os.environ.get("TARGET_THREAD_ID")
-    target_name = os.environ.get("TARGET_NAME", "TARGET")
-    # Fetching the custom text from GitHub Secrets
     custom_msg = os.environ.get("CUSTOM_MESSAGE", "Default Message")
 
     if not cookie or not target_id:
@@ -97,7 +88,7 @@ def main():
 
     threads = []
     for i in range(THREADS):
-        t = threading.Thread(target=run_agent, args=(i+1, cookie, target_id, target_name, custom_msg))
+        t = threading.Thread(target=run_agent, args=(i+1, cookie, target_id, custom_msg))
         t.start()
         threads.append(t)
         time.sleep(10)
