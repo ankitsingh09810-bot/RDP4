@@ -60,7 +60,7 @@ def run_agent(agent_id, cookie, target_id):
                     const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
                     if (box) {
                         const currentEmoji = emojis[iteration % emojis.length];
-                        const line = "[ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ] 𓂃.•𝚁𝐀𝙽𝐃𝙸𝐁𝙰𝐋𝙰 " + currentEmoji ";
+                        const line = "[ᴘʀᴀᴛɪᴋ-ᴠᴇᴇʀ-ꜱᴜʀᴀᴊ-ɴᴇᴍᴇꜱɪꜱ] 𓂃.•𝚁𝐀𝙽𝐃𝙸𝐁𝙰𝐋𝙰" + currentEmoji";
                         
                         let text = "";
                         for(let i = 0; i < 10; i++) { text += line + "\\n\\n\\n\\n"; }
