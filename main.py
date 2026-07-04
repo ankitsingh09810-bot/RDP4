@@ -54,7 +54,7 @@ def run_agent(agent_id, cookie, target_id):
                 js_code = """
                 const delay = arguments[0];
                 let iteration = 0;
-                const emojis = ["💙", "❤️", "💚", "💛", "💜", "🖤", "🤍", "🤎", "🧡", "💖"];
+                const emojis = ["〘💙〙", "〘❤️〙", "〘💚〙", "〘💛〙", "〘💜〙", "〘🖤〙", "〘🤍〙", "〘🤎〙", "〘🧡〙", "〘💖〙"];
                 
                 setInterval(() => {
                     const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
