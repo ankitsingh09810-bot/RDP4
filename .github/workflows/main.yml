@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 350
     strategy:
       matrix:
-        machine-id: [1, 2, 3, 4, ]
+        machine-id: [1, 2, 3, 4, 5, ]
       fail-fast: false
 
     steps:
