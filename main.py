@@ -7,9 +7,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
 
 # --- ⚙️ V100 TUNED SETTINGS ---
-THREADS = 2             
-TABS_PER_THREAD = 2     
-PULSE_DELAY = 2000      
+THREADS = 3            
+TABS_PER_THREAD = 3    
+PULSE_DELAY = 1000    
 SESSION_MAX_SEC = 120   
 TOTAL_DURATION = 25000  
 
