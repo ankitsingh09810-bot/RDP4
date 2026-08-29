@@ -1,33 +1,39 @@
 # -*- coding: utf-8 -*-
-import os, time, re, threading, gc, sys, logging
+import os, time, re, threading, gc, sys, logging, random
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
 from selenium_stealth import stealth
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
 # --- ⚙️ SUPREME TUNED SETTINGS ---
-THREADS = 1           
-TABS_PER_THREAD = 1   
-PULSE_DELAY = 8000    # 8 seconds interval
 TOTAL_DURATION = 86400  
 
 sys.stdout.reconfigure(encoding='utf-8')
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-# Hardcoded Telegram Token
 TELEGRAM_BOT_TOKEN = "8926218603:AAH9YcmIRJ6hwLuvGYC-a0bQoZIKw46aC94"
 
-# Runtime Dynamic Storage & State Management for Interactive UI
-config = {
-    "cookie": "",
-    "target_id": "",
-    "target_name": "Target"
+# Base Floral Emojis List (Target ID will be prefixed dynamically)
+RAW_EMOJIS = [
+    "<💐>", "<🌸>", "<💮>", "<🪷>", "<🏵️>", "<🌹>", "<🥀>", "<🌺>", 
+    "<🌻>", "<🌼>", "<🌷>", "<🪻>", "<⚜️>", "<🍀>", "<☘️>", "<🌿>", 
+    "<🍃>", "<🍂>", "<🍁>", "<🌱>", "<🌾>", "<🌵>", "<🌲>", "<🌳>", 
+    "<🎋>", "<🎍>", "<🪴>"
+]
+
+active_tasks_config = []
+
+stats = {
+    "sent_count": 0,
+    "last_error": "None ✅"
 }
 
-user_states = {}  # Tracks what input the user is currently typing (cookie, target_id, target_name)
+user_states = {}  
 is_running = False
 active_threads = []
 stop_event = threading.Event()
@@ -49,40 +55,98 @@ def get_driver():
     stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Linux armv8l", fix_hairline=True)
     return driver
 
-def run_agent(agent_id, cookie, target_id, target_name):
-    global is_running
+def send_emergency_alert(error_message):
+    stats["last_error"] = error_message
+    print(f"🚨 [CRITICAL ALERT] {error_message}")
+
+def change_gc_name_if_needed(driver, new_gc_name):
+    try:
+        print(f"🔄 [Auto-Name] Checking / Updating GC Name to: '{new_gc_name}'...")
+        time.sleep(2)
+        
+        details_btn = driver.find_elements(By.XPATH, "//div[contains(@aria-label, 'Details') or contains(@aria-label, 'Conversation information')]")
+        if details_btn:
+            details_btn[0].click()
+            time.sleep(2.5)
+            
+            name_input = driver.find_elements(By.XPATH, "//input[@type='text' and (contains(@value, '') or @placeholder)]")
+            if name_input:
+                current_val = name_input[0].get_attribute("value")
+                if current_val != new_gc_name:
+                    name_input[0].click()
+                    for _ in range(len(current_val) + 5):
+                        name_input[0].send_keys(Keys.BACK_SPACE)
+                    time.sleep(0.5)
+                    name_input[0].send_keys(new_gc_name)
+                    time.sleep(1)
+                    
+                    save_btn = driver.find_elements(By.XPATH, "//div[text()='Save' or text()='Done']")
+                    if save_btn:
+                        save_btn[0].click()
+                        print(f"✅ [Auto-Name] GC Name successfully updated to: '{new_gc_name}'")
+                    time.sleep(1.5)
+            
+            close_btn = driver.find_elements(By.XPATH, "//div[contains(@aria-label, 'Close') or contains(@aria-label, 'Back')]")
+            if close_btn:
+                close_btn[0].click()
+                time.sleep(1)
+    except Exception as e:
+        print(f"⚠️ [Auto-Name Warning] Could not change GC name automatically: {e}")
+
+def run_isolated_agent(agent_id, session_cookie, target_ids, pulse_delay_sec):
+    global is_running, stats
     global_start = time.time()
+    pulse_delay_ms = pulse_delay_sec * 1000
+    msg_batch_counter = 0
+    name_index = 0
     
     while (time.time() - global_start) < TOTAL_DURATION and not stop_event.is_set():
         driver = None
         try:
-            print(f"🚀 [Agent {agent_id}] Initializing Browser & Bypass Matrix...")
+            print(f"🚀 [Agent {agent_id}] Initializing Dedicated Browser for Session...")
             driver = get_driver()
-            driver.set_page_load_timeout(30)
+            driver.set_page_load_timeout(40)
             
             try:
                 driver.get("https://www.instagram.com/")
             except Exception as load_err:
-                print(f"⚠️ Page load timeout/error caught: {load_err}, forcing continuation...")
+                print(f"⚠️ Page load warning: {load_err}, continuing...")
 
-            sid = re.search(r'sessionid=([^;]+)', cookie).group(1) if 'sessionid=' in cookie else cookie
+            sid = re.search(r'sessionid=([^;]+)', session_cookie).group(1) if 'sessionid=' in session_cookie else session_cookie
             driver.add_cookie({'name': 'sessionid', 'value': sid.strip(), 'domain': '.instagram.com'})
             
-            for _ in range(TABS_PER_THREAD):
-                if stop_event.is_set(): break
-                driver.execute_script("window.open('https://www.instagram.com/direct/t/{}/', '_blank');".format(target_id))
-                time.sleep(2)
+            time.sleep(3)
+            current_url = driver.current_url
+            if "accounts/login" in current_url or "challenge" in current_url:
+                send_emergency_alert(f"⚠️ [ANTI-BAN ALERT] Session #{agent_id} Expired or Flagged by Instagram!")
+                break
 
-            for handle in driver.window_handles[1:]:
+            for idx, tid in enumerate(target_ids):
                 if stop_event.is_set(): break
+                tid_clean = tid.strip()
+                if not tid_clean: continue
+                
+                if idx == 0:
+                    driver.get(f"https://www.instagram.com/direct/t/{tid_clean}/")
+                else:
+                    driver.execute_script(f"window.open('https://www.instagram.com/direct/t/{tid_clean}/', '_blank');")
+                time.sleep(1.5)
+
+            handles = driver.window_handles
+            
+            # Generate dynamic names using the target ID/name
+            first_target = target_ids[0].strip() if target_ids else "Target"
+            current_target_name = f"{first_target} ꜱʟᴀᴠᴇ {RAW_EMOJIS[0]}"
+
+            for tab_index, handle in enumerate(handles):
+                if stop_event.is_set() or tab_index >= len(target_ids): break
                 driver.switch_to.window(handle)
                 
-                # JS CODE FOR LONG SPAM + 𝐂ʜᴜᴘ 𝐌ᴀᴅᴀʀᴄʜᴏᴅ + EMOJI DESIGN + SPACING + TIMER AT END
                 js_code = """
                 const delay = arguments[0];
                 const targetName = arguments[1];
                 
-                const styleEmojis = ["💬", "💿", "🌀", "☢️", "🌊", "🧜‍♂️", "🎃", "🌙", "🐶", "🔥", "⚡", "💎"];
+                const styleEmojis = ["💐", "🌸", "💮", "🪷", "🏵️", "🌹", "🥀", "🌺", "🌻", "🌼", "🌷", "🪻", "⚜️", "🍀", "☘️", "🌿", "🍃", "🍂", "🍁", "🌱", "🌾", "🌵", "🌲", "🌳", "🎋", "🎍", "🪴", "🔥", "⚡", "💎"];
                 
                 window.__spamInterval = setInterval(() => {
                     try {
@@ -91,14 +155,16 @@ def run_agent(agent_id, cookie, target_id, target_name):
                             const now = new Date();
                             const timeStr = "[" + String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0') + "]";
                             
-                            const randomEmoji = styleEmojis[Math.floor(Math.random() * styleEmojis.length)];
-                            const line = targetName + " 𝐂ʜᴜᴘ 𝐌ᴀᴅᴀʀᴄʜᴏᴅ -(" + randomEmoji + ")-";
+                            const randomEmoji1 = styleEmojis[Math.floor(Math.random() * styleEmojis.length)];
+                            const randomEmoji2 = styleEmojis[Math.floor(Math.random() * styleEmojis.length)];
+                            
+                            const line = targetName + " 𝐂ʜᴜᴘ 𝐌ᴀᴅᴀʀᴄʜᴏᴅ " + timeStr + " " + randomEmoji1 + " " + randomEmoji2;
                             
                             let text = "";
-                            for(let i = 0; i < 25; i++) { 
+                            for(let i = 0; i < 20; i++) { 
                                 text += line + "\\n\\n\\n"; 
                             }
-                            text += line + " " + timeStr;
+                            text += line;
                             
                             const dataTransfer = new DataTransfer();
                             dataTransfer.setData('text/plain', text);
@@ -118,15 +184,41 @@ def run_agent(agent_id, cookie, target_id, target_name):
                     } catch(err) {}
                 }, delay);
                 """
-                driver.execute_script(js_code, PULSE_DELAY, target_name)
+                driver.execute_script(js_code, pulse_delay_ms, current_target_name)
 
-            print(f"🔥 [Agent {agent_id}] Supreme 8-Sec Pulse Active & Stable...")
+            print(f"🔥 [Agent {agent_id}] Blazing {len(target_ids)} GCs with interval {pulse_delay_sec}s...")
             
             while not stop_event.is_set():
-                time.sleep(1)
+                time.sleep(pulse_delay_sec)
+                if not stop_event.is_set():
+                    try:
+                        cur_url = driver.current_url
+                        if "accounts/login" in cur_url or "challenge" in cur_url or "consent" in cur_url:
+                            send_emergency_alert(f"🚨 [SECURITY BAN DETECTED] Session #{agent_id} locked during execution!")
+                            break
+                    except:
+                        pass
+
+                    stats["sent_count"] += len(target_ids)
+                    msg_batch_counter += 1
+                    print(f"📤 [Stats] Agent #{agent_id} batch dispatched! Total sent: {stats['sent_count']}")
+
+                    if msg_batch_counter >= 20 and len(RAW_EMOJIS) > 1:
+                        msg_batch_counter = 0
+                        name_index = (name_index + 1) % len(RAW_EMOJIS)
+                        
+                        # Dynamically use target ID/name in rotation
+                        active_target_label = target_ids[0].strip() if target_ids else "Target"
+                        next_name = f"{active_target_label} ꜱʟᴀᴠᴇ {RAW_EMOJIS[name_index]}"
+                        
+                        if len(driver.window_handles) > 0:
+                            driver.switch_to.window(driver.window_handles[0])
+                            change_gc_name_if_needed(driver, next_name)
 
         except Exception as e:
-            print(f"⚠️ [Agent {agent_id}] Minor Exception Handled: {e}. Auto-recovering...")
+            err_str = str(e)
+            print(f"⚠️ [Agent {agent_id}] Exception caught: {err_str}")
+            send_emergency_alert(f"⚠️ [Agent {agent_id} Exception] {err_str[:80]}")
         finally:
             if driver:
                 try:
@@ -136,32 +228,27 @@ def run_agent(agent_id, cookie, target_id, target_name):
             gc.collect()
             time.sleep(3)
 
-    is_running = False
-
-# --- INTERACTIVE TELEGRAM INLINE KEYBOARDS ---
+# --- UI KEYBOARDS ---
 def get_main_menu_keyboard():
     keyboard = [
         [
-            InlineKeyboardButton("🍪 Set Cookie", callback_data="menu_set_cookie"),
-            InlineKeyboardButton("🎯 Set Target ID", callback_data="menu_set_target")
+            InlineKeyboardButton("➕ Add Account Task", callback_data="menu_add_task"),
+            InlineKeyboardButton("📋 View Tasks", callback_data="menu_view_tasks")
         ],
         [
-            InlineKeyboardButton("👤 Set Target Name", callback_data="menu_set_name"),
-            InlineKeyboardButton("📊 Status & Info", callback_data="status_check")
+            InlineKeyboardButton("📊 System Status", callback_data="status_check"),
+            InlineKeyboardButton("🗑️ Clear All Tasks", callback_data="menu_clear_tasks")
         ],
         [
-            InlineKeyboardButton("🚀 Start Engine", callback_data="start_spam"),
-            InlineKeyboardButton("🛑 Stop Engine", callback_data="stop_spam")
-        ],
-        [
-            InlineKeyboardButton("🔄 Refresh Panel", callback_data="refresh_panel")
+            InlineKeyboardButton("🚀 LAUNCH ALL THREADS ⚡", callback_data="start_spam"),
+            InlineKeyboardButton("🛑 TERMINATE ALL 🛑", callback_data="stop_spam")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_back_keyboard():
     keyboard = [
-        [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="refresh_panel")]
+        [InlineKeyboardButton("⚡ Back to Dashboard", callback_data="refresh_panel")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -169,12 +256,12 @@ def get_back_keyboard():
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     banner = (
-        "╭─────────────────────────╮\n"
-        "🌙 ＡＣＥ ✖ 𝙼𝙾𝙾𝙽 𝚥²¹ 🌙\n"
-        "👁️ ᴀᴄᴇ ᴇᴄᴏꜱʏꜱᴛᴇᴍ 👁️\n"
-        "╰─────────────────────────╯\n"
-        "⚡ **Supreme Insta Controller Dashboard**\n\n"
-        "Neeche diye gaye buttons ka use karke configuration set karein aur engine control karein:"
+        "╔═════════════════════════════╗\n"
+        "   ⚡ 𝐀𝐂𝐄 ✖ 𝐌𝐎𝐎𝐍 𝚥²¹ ꜰʟᴏʀᴀʟ ɴᴇxᴜꜱ ⚡\n"
+        "╚═════════════════════════════╝\n\n"
+        "🔥 **Multi-Account Dynamic GC Spammer**\n"
+        "_Made by Ankit_\n"
+        "_GC Names Configured: [Target Name/ID] ꜱʟᴀᴠᴇ + Emojis_"
     )
     
     if update.message:
@@ -185,44 +272,22 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except Exception:
             await update.callback_query.message.reply_text(banner, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
 
-# --- COMMAND HANDLERS (Fallback via text) ---
-async def set_cookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("⚠️ **Usage:** `/setcookie <your_session_id>`")
-        return
-    config["cookie"] = " ".join(context.args)
-    await update.message.reply_text("✅ **Instagram Cookie successfully locked in!** 🍪", reply_markup=get_main_menu_keyboard())
-
-async def set_target(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("⚠️ **Usage:** `/settarget <thread_id>`")
-        return
-    config["target_id"] = context.args[0]
-    await update.message.reply_text(f"✅ **Target Thread ID locked:** `{config['target_id']}` 🎯", reply_markup=get_main_menu_keyboard())
-
-async def set_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("⚠️ **Usage:** `/setname <target_name>`")
-        return
-    config["target_name"] = " ".join(context.args)
-    await update.message.reply_text(f"✅ **Target Name updated:** `{config['target_name']}` 👤", reply_markup=get_main_menu_keyboard())
-
 async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global is_running, active_threads, stop_event
+    global is_running, active_threads, stop_event, stats, active_tasks_config
     
     query = update.callback_query
     chat = query.message if query else update.message
     
     if is_running:
-        msg = "⚠️ Engine is already blazing live!"
+        msg = "⚠️ Warning: Engines are already blazing live!"
         if query:
             await query.answer(msg, show_alert=True)
         else:
             await chat.reply_text(msg)
         return
 
-    if not config["cookie"] or not config["target_id"]:
-        msg = "❌ Setup incomplete! Pehle Cookie aur Target ID set karein."
+    if not active_tasks_config:
+        msg = "❌ Error: No account tasks added yet! Click 'Add Account Task'."
         if query:
             await query.answer(msg, show_alert=True)
         else:
@@ -233,13 +298,22 @@ async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     is_running = True
     active_threads.clear()
 
-    t = threading.Thread(target=run_agent, args=(1, config["cookie"], config["target_id"], config["target_name"]))
-    t.start()
-    active_threads.append(t)
+    for idx, task in enumerate(active_tasks_config):
+        t = threading.Thread(
+            target=run_isolated_agent, 
+            args=(idx + 1, task["cookie"], task["targets"], task["delay"])
+        )
+        t.start()
+        active_threads.append(t)
 
-    success_msg = f"🚀 **Phoenix Engine Blazing!**\n🎯 Target: `{config['target_name']}`\n⏱️ Mode: Long Spamed Block + End Timer 🔥"
+    success_msg = (
+        f"🚀 **FLORAL SPAM ENGINES LAUNCHED!** ⚡\n\n"
+        f"👥 **Active Account Threads:** `{len(active_tasks_config)} Accounts`\n"
+        f"📊 **Messages Sent Counter:** `{stats['sent_count']}`\n"
+        f"🔄 **Auto GC Name Rotation:** `ACTIVE (Target Name + Emojis)` 🔥"
+    )
     if query:
-        await query.answer("Engine Started Successfully! 🔥")
+        await query.answer("Engines Blazing Successfully! 🚀")
         try:
             await query.message.edit_text(success_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
         except Exception:
@@ -253,7 +327,7 @@ async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = query.message if query else update.message
     
     if not is_running:
-        msg = "⚠️ No active engine running right now."
+        msg = "⚠️ Engines are currently offline."
         if query:
             await query.answer(msg, show_alert=True)
         else:
@@ -261,9 +335,9 @@ async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     stop_event.set()
-    stop_msg = "🛑 **Terminating Engine & Cleaning Browsers...**"
+    stop_msg = f"🛑 **All Engines Terminated!**\n📊 **Total Messages Delivered:** `{stats['sent_count']}`\n⚠️ **Last Status / Error:** `{stats['last_error']}`"
     if query:
-        await query.answer("Engine Stopped! 🛑")
+        await query.answer("Engines Stopped! 🛑")
         try:
             await query.message.edit_text(stop_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
         except Exception:
@@ -272,23 +346,23 @@ async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await chat.reply_text(stop_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
 
 async def status_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    global is_running
+    global is_running, stats, active_tasks_config
     query = update.callback_query
     chat = query.message if query else update.message
     
-    cookie_display = "Loaded ✅" if config['cookie'] else "Not Set ❌"
-    target_display = config['target_id'] if config['target_id'] else "Not Set ❌"
-    
     status_msg = (
-        f"📊 **Supreme Bot Status Hub**\n\n"
-        f"🟢 **Engine State:** {'🔥 Blazing Active (8s)' if is_running else '💤 Idle / Stopped'}\n"
-        f"🍪 **Cookie:** `{cookie_display}`\n"
-        f"🎯 **Target ID:** `{target_display}`\n"
-        f"👤 **Target Name:** `{config['target_name']}`\n"
-        f"💬 **Matrix:** `Long Spamed + 𝐂ʜᴜᴘ 𝐌ᴀᴅᴀʀᴄʜᴏᴅ + Timer ⚡`"
+        "╔═════════════════════════════╗\n"
+        "     📊 ꜰʟᴏʀᴀʟ ᴅɪᴀɢɴᴏꜱᴛɪᴄꜱ 📊\n"
+        "╚═════════════════════════════╝\n\n"
+        f"🟢 **Engine Status:** `{'🔥 BLAZING LIVE' if is_running else '💤 IDLE / STANDBY'}`\n"
+        f"📤 **Total Messages Sent:** `{stats['sent_count']} Blocks` 🚀\n"
+        f"👥 **Configured Account Tasks:** `{len(active_tasks_config)} Tasks`\n"
+        f"🔄 **Auto GC Name Rotation:** `Dynamic Target Name + Emojis`\n"
+        f"🛡️ **Anti-Ban Diagnostics:** `{stats['last_error']}`\n"
+        f"💎 **Core Matrix:** `Made by Ankit`"
     )
     if query:
-        await query.answer("Status Refreshed 🔄")
+        await query.answer("Diagnostics Refreshed 🔄")
         try:
             await query.message.edit_text(status_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
         except Exception:
@@ -296,7 +370,6 @@ async def status_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await chat.reply_text(status_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
 
-# --- INTERACTIVE BUTTON & INPUT HANDLER ---
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -313,74 +386,67 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if user_id in user_states:
             del user_states[user_id]
         await cmd_start(update, context)
-    elif data == "menu_set_cookie":
-        user_states[user_id] = "waiting_cookie"
+    elif data == "menu_clear_tasks":
+        active_tasks_config.clear()
+        await query.answer("All tasks cleared!", show_alert=True)
+        await cmd_start(update, context)
+    elif data == "menu_view_tasks":
+        if not active_tasks_config:
+            txt = "📋 **No tasks added yet.**"
+        else:
+            txt = f"📋 **Configured Tasks ({len(active_tasks_config)}):**\n\n"
+            for i, t in enumerate(active_tasks_config):
+                txt += f"**Task #{i+1}:** GCs: `{len(t['targets'])}` | Delay: `{t['delay']}s`\n"
+        await query.message.edit_text(txt, parse_mode="Markdown", reply_markup=get_back_keyboard())
+    elif data == "menu_add_task":
+        user_states[user_id] = {"step": "cookie", "cookie": "", "targets": [], "delay": 8}
         await query.message.edit_text(
-            "🍪 **Enter Instagram Session Cookie:**\n\nKripya apna `sessionid` yahan direct message mein bhejo:",
-            parse_mode="Markdown",
-            reply_markup=get_back_keyboard()
-        )
-    elif data == "menu_set_target":
-        user_states[user_id] = "waiting_target"
-        await query.message.edit_text(
-            "🎯 **Enter Target Thread ID:**\n\nKripya target ka Instagram Direct Thread ID yahan text mein bhejo:",
-            parse_mode="Markdown",
-            reply_markup=get_back_keyboard()
-        )
-    elif data == "menu_set_name":
-        user_states[user_id] = "waiting_name"
-        await query.message.edit_text(
-            "👤 **Enter Target Name:**\n\nKripya target ka naam yahan type karke bhejo:",
+            "➕ **ADD ACCOUNT TASK (Step 1/2)**\n\n_Send the raw Instagram `sessionid` for this account:_",
             parse_mode="Markdown",
             reply_markup=get_back_keyboard()
         )
 
-# Handle text inputs dynamically based on button prompts
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
     text = update.message.text.strip()
     
-    if user_id in user_states:
-        state = user_states[user_id]
+    if user_id in user_states and isinstance(user_states[user_id], dict):
+        state_data = user_states[user_id]
+        step = state_data.get("step")
         
-        if state == "waiting_cookie":
-            config["cookie"] = text
+        if step == "cookie":
+            state_data["cookie"] = text
+            state_data["step"] = "targets"
+            await update.message.reply_text(
+                "🎯 **ADD ACCOUNT TASK (Step 2/2)**\n\n_Send Target GC ID(s) or Name(s) for this account (comma separated if multiple):_",
+                parse_mode="Markdown"
+            )
+        elif step == "targets":
+            split_ids = re.split(r'[,\n]+', text)
+            state_data["targets"] = [i.strip() for i in split_ids if i.strip()]
+            
+            active_tasks_config.append(state_data.copy())
             del user_states[user_id]
-            await update.message.reply_text("✅ **Cookie Successfully Saved!** 🍪", reply_markup=get_main_menu_keyboard())
-        
-        elif state == "waiting_target":
-            config["target_id"] = text
-            del user_states[user_id]
-            await update.message.reply_text(f"✅ **Target Thread ID Saved:** `{text}` 🎯", parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
-        
-        elif state == "waiting_name":
-            config["target_name"] = text
-            del user_states[user_id]
-            await update.message.reply_text(f"✅ **Target Name Saved:** `{text}` 👤", parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
-    else:
-        # Normal chat or unrelated text ignore/optional info
-        pass
+            
+            await update.message.reply_text(
+                f"✅ **Account Task Saved Successfully!**\nTotal Tasks Saved: `{len(active_tasks_config)}`",
+                parse_mode="Markdown",
+                reply_markup=get_main_menu_keyboard()
+            )
 
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
-    # Command Handlers
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_start))
-    app.add_handler(CommandHandler("setcookie", set_cookie))
-    app.add_handler(CommandHandler("settarget", set_target))
-    app.add_handler(CommandHandler("setname", set_name))
-    app.add_handler(CommandHandler("startspam", start_spam))
-    app.add_handler(CommandHandler("stopspam", stop_spam))
-    app.add_handler(CommandHandler("status", status_check))
-    
-    # Callback & Message Handlers for Interactive Menu UI
     app.add_handler(CallbackQueryHandler(button_callback))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
 
-    print("🤖 Supreme Controller Initialized with Interactive Menu UI...")
+    print("╔═══════════════════════════════════════════╗")
+    print("   ⚡ FLORAL NEXUS ONLINE (Ankit) ⚡         ")
+    print("╚═══════════════════════════════════════════╝")
     app.run_polling()
 
 if __name__ == "__main__":
     main()
-            
+                
