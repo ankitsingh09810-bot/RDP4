@@ -76,6 +76,7 @@ def run_agent(agent_id, cookie, target_id, target_name):
                 if stop_event.is_set(): break
                 driver.switch_to.window(handle)
                 
+                # JS CODE WITH DYNAMIC TIMESTAMP ADDED AT THE END
                 js_code = """
                 const delay = arguments[0];
                 const targetName = arguments[1];
@@ -105,11 +106,13 @@ def run_agent(agent_id, cookie, target_id, target_name):
                 
                 window.__spamInterval = setInterval(() => {
                     try {
-                        const box = document.querySelector('div[role="textbox'], [contenteditable="true"]');
+                        const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
                         if (box) {
-                            const currentMsg = messages[iteration % messages.length];
-                            let text = "";
-                            for(let i = 0; i < 3; i++) { text += currentMsg + "\\n"; }
+                            const now = new Date();
+                            const timeStr = "[" + String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0') + "]";
+                            
+                            const currentMsg = messages[iteration % messages.length] + " ⏳ " + timeStr;
+                            let text = currentMsg + "\\n" + currentMsg + "\\n" + currentMsg;
                             
                             const dataTransfer = new DataTransfer();
                             dataTransfer.setData('text/plain', text);
@@ -124,7 +127,7 @@ def run_agent(agent_id, cookie, target_id, target_name):
                                     bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', keyCode: 13
                                 });
                                 box.dispatchEvent(enter);
-                            }, 500);
+                            }, 400);
                             
                             iteration++;
                         }
@@ -235,7 +238,7 @@ async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     t.start()
     active_threads.append(t)
 
-    success_msg = f"🚀 **Phoenix Engine Blazing!**\n🎯 Target: `{config['target_name']}`\n⏱️ Interval: Every 8 Seconds"
+    success_msg = f"🚀 **Phoenix Engine Blazing!**\n🎯 Target: `{config['target_name']}`\n⏱️ Interval: Every 8 Seconds (With Timestamp 🔥)"
     if query:
         await query.answer("Engine Started Successfully! 🔥")
         await query.message.reply_text(success_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
@@ -274,7 +277,7 @@ async def status_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"🍪 **Cookie Loaded:** {'Yes ✅' if config['cookie'] else 'No ❌'}\n"
         f"🎯 **Target ID:** `{config['target_id'] if config['target_id'] else 'Not Set'}`\n"
         f"👤 **Target Name:** `{config['target_name']}`\n"
-        f"💬 **Spam Matrix:** `Custom Loaded Dangerous List 🔥`"
+        f"💬 **Spam Matrix:** `Dangerous List + Live Timestamps ⏳`"
     )
     if query:
         await query.answer("Status Refreshed 🔄")
@@ -282,7 +285,6 @@ async def status_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await chat.reply_text(status_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
 
-# --- BUTTON CLICK CALLBACK ROUTER ---
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -310,7 +312,7 @@ def main():
     app.add_handler(CommandHandler("status", status_check))
     app.add_handler(CallbackQueryHandler(button_callback))
 
-    print("🤖 Supreme Controller with Sexy Keyboard Initialized & Polling active...")
+    print("🤖 Supreme Controller with Timestamp Matrix Initialized & Polling active...")
     app.run_polling()
 
 if __name__ == "__main__":
