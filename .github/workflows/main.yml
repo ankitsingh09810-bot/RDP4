@@ -1,4 +1,4 @@
-name: Phoenix V100 (15-Machine Matrix)
+name: Phoenix V100 (Telegram Bot Control)
 
 on:
   workflow_dispatch:
@@ -11,7 +11,7 @@ jobs:
     timeout-minutes: 350
     strategy:
       matrix:
-        machine-id: [1, 2,]
+        machine-id: [1]
       fail-fast: false
 
     steps:
@@ -25,15 +25,12 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        pip install selenium==4.9.0 selenium-stealth webdriver-manager
+        python -m pip install --upgrade pip
+        pip install selenium==4.9.0 selenium-stealth webdriver-manager requests python-telegram-bot
 
-    - name: 🔥 Run Phoenix Engine
+    - name: 🔥 Run Phoenix Engine (Telegram Bot)
       env:
         PYTHONIOENCODING: utf-8
-        INSTA_COOKIE: ${{ secrets.INSTA_COOKIE }}
-        TARGET_THREAD_ID: ${{ secrets.TARGET_THREAD_ID }}
-        TARGET_NAME: ${{ secrets.TARGET_NAME }}
-        CUSTOM_MESSAGE: ${{ secrets.CUSTOM_MESSAGE }}
         MACHINE_INDEX: ${{ matrix.machine-id }}
       run: |
         # STAGGERED START: Spacing out machines to reduce detection risk
@@ -42,7 +39,7 @@ jobs:
         sleep $DELAY
 
         while true; do
-          echo "🚀 Starting Linux Turbo Engine on Machine #${MACHINE_INDEX}..."
+          echo "🚀 Starting Telegram Bot Controller on Machine #${MACHINE_INDEX}..."
           
           # Using -u for real-time unbuffered log output
           if python -u main.py; then
@@ -53,3 +50,4 @@ jobs:
           
           sleep 10
         done
+        
