@@ -18,7 +18,7 @@ sys.stdout.reconfigure(encoding='utf-8')
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
 
 # Hardcoded Telegram Token
-TELEGRAM_BOT_TOKEN = "8926218603:AAH9YcmIRJ6hwLuvGYC-a0bQoZIKw46aC94"
+TELEGRAM_BOT_TOKEN = "8763771095:AAH72d1WF_xTtl23D8Z9-N3-A9g5b-z4ols"
 
 # Runtime Dynamic Storage
 config = {
