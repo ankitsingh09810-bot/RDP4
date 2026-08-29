@@ -5,8 +5,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium_stealth import stealth
-from telegram import Update
-from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
 # --- ⚙️ SUPREME TUNED SETTINGS ---
 THREADS = 1           
@@ -17,15 +17,14 @@ TOTAL_DURATION = 86400
 sys.stdout.reconfigure(encoding='utf-8')
 logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=logging.INFO)
 
-# Updated Hardcoded Telegram Token
+# Hardcoded Telegram Token
 TELEGRAM_BOT_TOKEN = "8926218603:AAH9YcmIRJ6hwLuvGYC-a0bQoZIKw46aC94"
 
 # Runtime Dynamic Storage
 config = {
     "cookie": "",
     "target_id": "",
-    "target_name": "Target",  
-    "custom_text": "Bᴏʟᴇ  𝐀 ɴ ᴋ ɪ ᴛ  पिताश्री  Mᴇʀɪ Mᴀ Cʜᴏᴅ Dᴏ"
+    "target_name": "Target"
 }
 
 is_running = False
@@ -49,7 +48,7 @@ def get_driver():
     stealth(driver, languages=["en-US"], vendor="Google Inc.", platform="Linux armv8l", fix_hairline=True)
     return driver
 
-def run_agent(agent_id, cookie, target_id, target_name, custom_text):
+def run_agent(agent_id, cookie, target_id, target_name):
     global is_running
     global_start = time.time()
     
@@ -80,19 +79,37 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_text):
                 js_code = """
                 const delay = arguments[0];
                 const targetName = arguments[1];
-                const customText = arguments[2];
                 let iteration = 0;
-                const emojis = ["⟬𝔛𓊈🌀𓊉𝔛⟭", "⟬𝔛𓊈💎𓊉𝔛⟭", "⟬𝔛𓊈❄️𓊉𝔛⟭", "⟬𝔛𓊈🍫𓊉𝔛⟭", "⟬𝔛𓊈🎐𓊉𝔛⟭", "⟬𝔛𓊈🥎𓊉𝔛⟭", "⟬𝔛𓊈💥𓊉𝔛⟭", "⟬𝔛𓊈💢𓊉𝔛⟭", "⟬𝔛𓊈⚾𓊉𝔛⟭", "⟬𝔛𓊈💦𓊉𝔛⟭"];
+                
+                const messages = [
+                    "〔💀〕 " + targetName + " Cʜɪꪀꫝʟ 〔💀〕",
+                    "〔🔥〕 " + targetName + " ᴄʜꪊᴛꫝᴅ 〔🔥〕",
+                    "〔🩸〕 " + targetName + " ʟꪊᴜɴᴅ ᥴʜᴜડ 〔🩸〕",
+                    "〔👹〕 " + targetName + " ᴄʜꪊᴅ 〔👹〕",
+                    "〔☣️〕 " + targetName + " ꪑꫝᴅꫝʀCʜꪮᴅ 〔☣️〕",
+                    "〔⚔️〕 " + targetName + " ᴋꫝꪑᴊꪮʀ 〔⚔️〕",
+                    "〔⛓️〕 " + targetName + " ꜱʟꪖᴠᴇ 〔⛓️〕",
+                    "〔🎭〕 " + targetName + " ᴄʜʜꫝᴋᴇ 〔🎭〕",
+                    "〔💸〕 " + targetName + " ɢꫝʀᴇᴇʙ 〔💸〕",
+                    "〔🦴〕 " + targetName + " ᴄʜꫝᴍꫝꫝʀ 〔🦴〕",
+                    "〔💥〕 " + targetName + " ʙʜꪮડᴅɪᴋꫝ 〔💥〕",
+                    "〔👑〕 " + targetName + " ɢꫝ᭙ꫝʀ 〔👑〕",
+                    "〔😈〕 " + targetName + " ᴊʜꫝᴛᴜ 〔😈〕",
+                    "〔🦂〕 " + targetName + " 𝕜ꪊᴛɪꪗꫝ 〔🦂〕",
+                    "〔🔗〕 " + targetName + " ɢꪊʟꫝꪑ 〔🔗〕",
+                    "〔🚫〕 " + targetName + " ᴛꪑᴋᥴ 〔🚫〕",
+                    "〔📛〕 " + targetName + " ᴅꫝʟɪᴛ 〔📛〕",
+                    "〔🕷️〕 " + targetName + " ʀꪀᴅꪗᴋꫝ 〔🕷️〕",
+                    "〔🪦〕 " + targetName + " ʙʜꫝꪀɢɪ 〔🪦〕"
+                ];
                 
                 window.__spamInterval = setInterval(() => {
                     try {
-                        const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
+                        const box = document.querySelector('div[role="textbox'], [contenteditable="true"]');
                         if (box) {
-                            const currentEmoji = emojis[iteration % emojis.length];
-                            const line = "[" + targetName + "]" + customText + currentEmoji;
-                            
+                            const currentMsg = messages[iteration % messages.length];
                             let text = "";
-                            for(let i = 0; i < 3; i++) { text += line + "\\n"; }
+                            for(let i = 0; i < 3; i++) { text += currentMsg + "\\n"; }
                             
                             const dataTransfer = new DataTransfer();
                             dataTransfer.setData('text/plain', text);
@@ -114,7 +131,7 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_text):
                     } catch(err) {}
                 }, delay);
                 """
-                driver.execute_script(js_code, PULSE_DELAY, target_name, custom_text)
+                driver.execute_script(js_code, PULSE_DELAY, target_name)
 
             print(f"🔥 [Agent {agent_id}] Supreme 8-Sec Pulse Active & Stable...")
             
@@ -134,6 +151,20 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_text):
 
     is_running = False
 
+# --- TELEGRAM INLINE KEYBOARD ---
+def get_control_keyboard():
+    keyboard = [
+        [
+            InlineKeyboardButton("🚀 Start Engine", callback_data="start_spam"),
+            InlineKeyboardButton("🛑 Stop Engine", callback_data="stop_spam")
+        ],
+        [
+            InlineKeyboardButton("📊 Check Status", callback_data="status_check"),
+            InlineKeyboardButton("🔄 Refresh Panel", callback_data="refresh_panel")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
 # --- TELEGRAM BOT HANDLERS ---
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -142,87 +173,129 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 👁️ ᴀᴄᴇ ᴇᴄᴏꜱʏꜱᴛᴇᴍ 👁️
 ╰─────────────────────────╯
 ⚡ **Supreme Insta Controller Bot**
-Use these commands to configure & run:
+Use commands or tap buttons below:
 🔹 `/setcookie <session_id>`
 🔹 `/settarget <thread_id>`
 🔹 `/setname <target_name>`
-🔹 `/settext <spam_message>`
-🔹 `/startspam` - Run Engine
-🔹 `/stopspam` - Kill Engine
-🔹 `/status` - Check Status
 ═════════════════════"""
-    await update.message.reply_text(banner, parse_mode="Markdown")
+    
+    if update.message:
+        await update.message.reply_text(banner, parse_mode="Markdown", reply_markup=get_control_keyboard())
+    elif update.callback_query:
+        await update.callback_query.message.edit_text(banner, parse_mode="Markdown", reply_markup=get_control_keyboard())
 
 async def set_cookie(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("⚠️ **Usage:** `/setcookie <your_session_id>`")
         return
     config["cookie"] = " ".join(context.args)
-    await update.message.reply_text("✅ **Instagram Cookie successfully locked in!** 🍪")
+    await update.message.reply_text("✅ **Instagram Cookie successfully locked in!** 🍪", reply_markup=get_control_keyboard())
 
 async def set_target(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("⚠️ **Usage:** `/settarget <thread_id>`")
         return
     config["target_id"] = context.args[0]
-    await update.message.reply_text(f"✅ **Target Thread ID locked:** `{config['target_id']}` 🎯")
+    await update.message.reply_text(f"✅ **Target Thread ID locked:** `{config['target_id']}` 🎯", reply_markup=get_control_keyboard())
 
 async def set_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.args:
         await update.message.reply_text("⚠️ **Usage:** `/setname <target_name>`")
         return
     config["target_name"] = " ".join(context.args)
-    await update.message.reply_text(f"✅ **Target Name updated:** `{config['target_name']}` 👤")
-
-async def set_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if not context.args:
-        await update.message.reply_text("⚠️ **Usage:** `/settext <custom message>`")
-        return
-    config["custom_text"] = " ".join(context.args)
-    await update.message.reply_text(f"✅ **Spam Text updated successfully!** 💬")
+    await update.message.reply_text(f"✅ **Target Name updated:** `{config['target_name']}` 👤", reply_markup=get_control_keyboard())
 
 async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_running, active_threads, stop_event
     
+    query = update.callback_query
+    chat = query.message if query else update.message
+    
     if is_running:
-        await update.message.reply_text("⚠️ Engine is already blazing live!")
+        msg = "⚠️ Engine is already blazing live!"
+        if query:
+            await query.answer(msg, show_alert=True)
+        else:
+            await chat.reply_text(msg)
         return
 
     if not config["cookie"] or not config["target_id"]:
-        await update.message.reply_text("❌ Setup incomplete! Set `/setcookie` and `/settarget` first.")
+        msg = "❌ Setup incomplete! Set cookie and target first."
+        if query:
+            await query.answer(msg, show_alert=True)
+        else:
+            await chat.reply_text(msg)
         return
 
     stop_event.clear()
     is_running = True
     active_threads.clear()
 
-    t = threading.Thread(target=run_agent, args=(1, config["cookie"], config["target_id"], config["target_name"], config["custom_text"]))
+    t = threading.Thread(target=run_agent, args=(1, config["cookie"], config["target_id"], config["target_name"]))
     t.start()
     active_threads.append(t)
 
-    await update.message.reply_text(f"🚀 **Phoenix Engine Blazing!**\n🎯 Target: `{config['target_name']}`\n⏱️ Interval: Every 8 Seconds")
+    success_msg = f"🚀 **Phoenix Engine Blazing!**\n🎯 Target: `{config['target_name']}`\n⏱️ Interval: Every 8 Seconds"
+    if query:
+        await query.answer("Engine Started Successfully! 🔥")
+        await query.message.reply_text(success_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
+    else:
+        await chat.reply_text(success_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
 
 async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_running, stop_event
+    query = update.callback_query
+    chat = query.message if query else update.message
     
     if not is_running:
-        await update.message.reply_text("⚠️ No active engine running right now.")
+        msg = "⚠️ No active engine running right now."
+        if query:
+            await query.answer(msg, show_alert=True)
+        else:
+            await chat.reply_text(msg)
         return
 
     stop_event.set()
-    await update.message.reply_text("🛑 **Terminating Engine & Cleaning Browsers...**")
+    stop_msg = "🛑 **Terminating Engine & Cleaning Browsers...**"
+    if query:
+        await query.answer("Engine Stopped! 🛑")
+        await query.message.reply_text(stop_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
+    else:
+        await chat.reply_text(stop_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
 
 async def status_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_running
+    query = update.callback_query
+    chat = query.message if query else update.message
+    
     status_msg = (
         f"📊 **Supreme Bot Status Hub**\n\n"
         f"🟢 **Engine State:** {'🔥 Blazing Active (8s)' if is_running else '💤 Idle / Stopped'}\n"
         f"🍪 **Cookie Loaded:** {'Yes ✅' if config['cookie'] else 'No ❌'}\n"
         f"🎯 **Target ID:** `{config['target_id'] if config['target_id'] else 'Not Set'}`\n"
         f"👤 **Target Name:** `{config['target_name']}`\n"
-        f"💬 **Current Text:** `{config['custom_text']}`"
+        f"💬 **Spam Matrix:** `Custom Loaded Dangerous List 🔥`"
     )
-    await update.message.reply_text(status_msg, parse_mode="Markdown")
+    if query:
+        await query.answer("Status Refreshed 🔄")
+        await query.message.edit_text(status_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
+    else:
+        await chat.reply_text(status_msg, parse_mode="Markdown", reply_markup=get_control_keyboard())
+
+# --- BUTTON CLICK CALLBACK ROUTER ---
+async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    data = query.data
+    if data == "start_spam":
+        await start_spam(update, context)
+    elif data == "stop_spam":
+        await stop_spam(update, context)
+    elif data == "status_check":
+        await status_check(update, context)
+    elif data == "refresh_panel":
+        await cmd_start(update, context)
 
 def main():
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
@@ -232,14 +305,14 @@ def main():
     app.add_handler(CommandHandler("setcookie", set_cookie))
     app.add_handler(CommandHandler("settarget", set_target))
     app.add_handler(CommandHandler("setname", set_name))
-    app.add_handler(CommandHandler("settext", set_text))
     app.add_handler(CommandHandler("startspam", start_spam))
     app.add_handler(CommandHandler("stopspam", stop_spam))
     app.add_handler(CommandHandler("status", status_check))
+    app.add_handler(CallbackQueryHandler(button_callback))
 
-    print("🤖 Supreme Controller Initialized & Polling active...")
+    print("🤖 Supreme Controller with Sexy Keyboard Initialized & Polling active...")
     app.run_polling()
 
 if __name__ == "__main__":
     main()
-            
+    
