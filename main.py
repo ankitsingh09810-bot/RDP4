@@ -18,14 +18,6 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=lo
 
 TELEGRAM_BOT_TOKEN = "8926218603:AAH9YcmIRJ6hwLuvGYC-a0bQoZIKw46aC94"
 
-# Base Floral Emojis List (Target ID will be prefixed dynamically)
-RAW_EMOJIS = [
-    "<💐>", "<🌸>", "<💮>", "<🪷>", "<🏵️>", "<🌹>", "<🥀>", "<🌺>", 
-    "<🌻>", "<🌼>", "<🌷>", "<🪻>", "<⚜️>", "<🍀>", "<☘️>", "<🌿>", 
-    "<🍃>", "<🍂>", "<🍁>", "<🌱>", "<🌾>", "<🌵>", "<🌲>", "<🌳>", 
-    "<🎋>", "<🎍>", "<🪴>"
-]
-
 active_tasks_config = []
 
 stats = {
@@ -59,46 +51,10 @@ def send_emergency_alert(error_message):
     stats["last_error"] = error_message
     print(f"🚨 [CRITICAL ALERT] {error_message}")
 
-def change_gc_name_if_needed(driver, new_gc_name):
-    try:
-        print(f"🔄 [Auto-Name] Checking / Updating GC Name to: '{new_gc_name}'...")
-        time.sleep(2)
-        
-        details_btn = driver.find_elements(By.XPATH, "//div[contains(@aria-label, 'Details') or contains(@aria-label, 'Conversation information')]")
-        if details_btn:
-            details_btn[0].click()
-            time.sleep(2.5)
-            
-            name_input = driver.find_elements(By.XPATH, "//input[@type='text' and (contains(@value, '') or @placeholder)]")
-            if name_input:
-                current_val = name_input[0].get_attribute("value")
-                if current_val != new_gc_name:
-                    name_input[0].click()
-                    for _ in range(len(current_val) + 5):
-                        name_input[0].send_keys(Keys.BACK_SPACE)
-                    time.sleep(0.5)
-                    name_input[0].send_keys(new_gc_name)
-                    time.sleep(1)
-                    
-                    save_btn = driver.find_elements(By.XPATH, "//div[text()='Save' or text()='Done']")
-                    if save_btn:
-                        save_btn[0].click()
-                        print(f"✅ [Auto-Name] GC Name successfully updated to: '{new_gc_name}'")
-                    time.sleep(1.5)
-            
-            close_btn = driver.find_elements(By.XPATH, "//div[contains(@aria-label, 'Close') or contains(@aria-label, 'Back')]")
-            if close_btn:
-                close_btn[0].click()
-                time.sleep(1)
-    except Exception as e:
-        print(f"⚠️ [Auto-Name Warning] Could not change GC name automatically: {e}")
-
-def run_isolated_agent(agent_id, session_cookie, target_ids, pulse_delay_sec):
+def run_isolated_agent(agent_id, session_cookie, target_name, target_ids, pulse_delay_sec):
     global is_running, stats
     global_start = time.time()
     pulse_delay_ms = pulse_delay_sec * 1000
-    msg_batch_counter = 0
-    name_index = 0
     
     while (time.time() - global_start) < TOTAL_DURATION and not stop_event.is_set():
         driver = None
@@ -133,58 +89,50 @@ def run_isolated_agent(agent_id, session_cookie, target_ids, pulse_delay_sec):
                 time.sleep(1.5)
 
             handles = driver.window_handles
-            
-            # Generate dynamic names using the target ID/name
-            first_target = target_ids[0].strip() if target_ids else "Target"
-            current_target_name = f"{first_target} ꜱʟᴀᴠᴇ {RAW_EMOJIS[0]}"
 
             for tab_index, handle in enumerate(handles):
                 if stop_event.is_set() or tab_index >= len(target_ids): break
                 driver.switch_to.window(handle)
                 
-                js_code = """
+                js_code = f"""
                 const delay = arguments[0];
-                const targetName = arguments[1];
+                const targetName = "{target_name}";
                 
-                const styleEmojis = ["💐", "🌸", "💮", "🪷", "🏵️", "🌹", "🥀", "🌺", "🌻", "🌼", "🌷", "🪻", "⚜️", "🍀", "☘️", "🌿", "🍃", "🍂", "🍁", "🌱", "🌾", "🌵", "🌲", "🌳", "🎋", "🎍", "🪴", "🔥", "⚡", "💎"];
-                
-                window.__spamInterval = setInterval(() => {
-                    try {
+                window.__spamInterval = setInterval(() => {{
+                    try {{
                         const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
-                        if (box) {
+                        if (box) {{
                             const now = new Date();
                             const timeStr = "[" + String(now.getHours()).padStart(2, '0') + ":" + String(now.getMinutes()).padStart(2, '0') + ":" + String(now.getSeconds()).padStart(2, '0') + "]";
                             
-                            const randomEmoji1 = styleEmojis[Math.floor(Math.random() * styleEmojis.length)];
-                            const randomEmoji2 = styleEmojis[Math.floor(Math.random() * styleEmojis.length)];
-                            
-                            const line = targetName + " 𝐂ʜᴜᴘ 𝐌ᴀᴅᴀʀᴄʜᴏᴅ " + timeStr + " " + randomEmoji1 + " " + randomEmoji2;
+                            // Exact required format matching screenshots
+                            const line = targetName + " 𝐂ʜᴜᴘ 𝐌ᴀᴅᴀʀᴄʜᴏᴅ -(🌙)- " + timeStr;
                             
                             let text = "";
-                            for(let i = 0; i < 20; i++) { 
+                            for(let i = 0; i < 20; i++) {{ 
                                 text += line + "\\n\\n\\n"; 
-                            }
+                            }}
                             text += line;
                             
                             const dataTransfer = new DataTransfer();
                             dataTransfer.setData('text/plain', text);
-                            const event = new ClipboardEvent('paste', {
+                            const event = new ClipboardEvent('paste', {{
                                 clipboardData: dataTransfer,
                                 bubbles: true
-                            });
+                            }});
                             box.dispatchEvent(event);
                             
-                            setTimeout(() => {
-                                const enter = new KeyboardEvent('keydown', {
+                            setTimeout(() => {{
+                                const enter = new KeyboardEvent('keydown', {{
                                     bubbles: true, cancelable: true, key: 'Enter', code: 'Enter', keyCode: 13
-                                });
+                                }});
                                 box.dispatchEvent(enter);
-                            }, 400);
-                        }
-                    } catch(err) {}
-                }, delay);
+                            }}, 400);
+                        }}
+                    }} catch(err) {{}}
+                }}, delay);
                 """
-                driver.execute_script(js_code, pulse_delay_ms, current_target_name)
+                driver.execute_script(js_code, pulse_delay_ms)
 
             print(f"🔥 [Agent {agent_id}] Blazing {len(target_ids)} GCs with interval {pulse_delay_sec}s...")
             
@@ -200,20 +148,7 @@ def run_isolated_agent(agent_id, session_cookie, target_ids, pulse_delay_sec):
                         pass
 
                     stats["sent_count"] += len(target_ids)
-                    msg_batch_counter += 1
                     print(f"📤 [Stats] Agent #{agent_id} batch dispatched! Total sent: {stats['sent_count']}")
-
-                    if msg_batch_counter >= 20 and len(RAW_EMOJIS) > 1:
-                        msg_batch_counter = 0
-                        name_index = (name_index + 1) % len(RAW_EMOJIS)
-                        
-                        # Dynamically use target ID/name in rotation
-                        active_target_label = target_ids[0].strip() if target_ids else "Target"
-                        next_name = f"{active_target_label} ꜱʟᴀᴠᴇ {RAW_EMOJIS[name_index]}"
-                        
-                        if len(driver.window_handles) > 0:
-                            driver.switch_to.window(driver.window_handles[0])
-                            change_gc_name_if_needed(driver, next_name)
 
         except Exception as e:
             err_str = str(e)
@@ -228,27 +163,46 @@ def run_isolated_agent(agent_id, session_cookie, target_ids, pulse_delay_sec):
             gc.collect()
             time.sleep(3)
 
-# --- UI KEYBOARDS ---
+# --- UI KEYBOARDS (TASK CONTROLLER STYLE) ---
 def get_main_menu_keyboard():
     keyboard = [
         [
-            InlineKeyboardButton("➕ Add Account Task", callback_data="menu_add_task"),
-            InlineKeyboardButton("📋 View Tasks", callback_data="menu_view_tasks")
+            InlineKeyboardButton("🚀 Start Session", callback_data="start_spam"),
+            InlineKeyboardButton("📊 Status", callback_data="status_check")
         ],
         [
-            InlineKeyboardButton("📊 System Status", callback_data="status_check"),
-            InlineKeyboardButton("🗑️ Clear All Tasks", callback_data="menu_clear_tasks")
+            InlineKeyboardButton("⚙️ Admin Info", callback_data="admin_info"),
+            InlineKeyboardButton("➕ Add Task", callback_data="menu_add_task")
         ],
         [
-            InlineKeyboardButton("🚀 LAUNCH ALL THREADS ⚡", callback_data="start_spam"),
-            InlineKeyboardButton("🛑 TERMINATE ALL 🛑", callback_data="stop_spam")
+            InlineKeyboardButton("📋 View Tasks", callback_data="menu_view_tasks"),
+            InlineKeyboardButton("🗑️ Clear Tasks", callback_data="menu_clear_tasks")
+        ],
+        [
+            InlineKeyboardButton("🛑 Stop Task / Terminate All", callback_data="stop_spam")
         ]
     ]
     return InlineKeyboardMarkup(keyboard)
 
 def get_back_keyboard():
     keyboard = [
-        [InlineKeyboardButton("⚡ Back to Dashboard", callback_data="refresh_panel")]
+        [InlineKeyboardButton("⚡ Back to Main Menu", callback_data="refresh_panel")]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def get_delay_keyboard():
+    keyboard = [
+        [
+            InlineKeyboardButton("⚡ 3s", callback_data="delay_3"),
+            InlineKeyboardButton("🔥 5s", callback_data="delay_5"),
+            InlineKeyboardButton("⏱️ 8s", callback_data="delay_8")
+        ],
+        [
+            InlineKeyboardButton("⏳ 10s", callback_data="delay_10"),
+            InlineKeyboardButton("🐢 15s", callback_data="delay_15"),
+            InlineKeyboardButton("🛑 20s", callback_data="delay_20")
+        ],
+        [InlineKeyboardButton("⚡ Back to Main Menu", callback_data="refresh_panel")]
     ]
     return InlineKeyboardMarkup(keyboard)
 
@@ -256,12 +210,8 @@ def get_back_keyboard():
 
 async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     banner = (
-        "╔═════════════════════════════╗\n"
-        "   ⚡ 𝐀𝐂𝐄 ✖ 𝐌𝐎𝐎𝐍 𝚥²¹ ꜰʟᴏʀᴀʟ ɴᴇxᴜꜱ ⚡\n"
-        "╚═════════════════════════════╝\n\n"
-        "🔥 **Multi-Account Dynamic GC Spammer**\n"
-        "_Made by Ankit_\n"
-        "_GC Names Configured: [Target Name/ID] ꜱʟᴀᴠᴇ + Emojis_"
+        "🤖 **MAIN MENU**\n"
+        "Select an operation:"
     )
     
     if update.message:
@@ -279,7 +229,7 @@ async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = query.message if query else update.message
     
     if is_running:
-        msg = "⚠️ Warning: Engines are already blazing live!"
+        msg = "⚠️ Warning: Session is already running!"
         if query:
             await query.answer(msg, show_alert=True)
         else:
@@ -287,7 +237,7 @@ async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     if not active_tasks_config:
-        msg = "❌ Error: No account tasks added yet! Click 'Add Account Task'."
+        msg = "❌ Error: No tasks added yet! Click 'Add Task'."
         if query:
             await query.answer(msg, show_alert=True)
         else:
@@ -301,25 +251,41 @@ async def start_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     for idx, task in enumerate(active_tasks_config):
         t = threading.Thread(
             target=run_isolated_agent, 
-            args=(idx + 1, task["cookie"], task["targets"], task["delay"])
+            args=(idx + 1, task["cookie"], task["target_name"], task["targets"], task["delay"])
         )
         t.start()
         active_threads.append(t)
 
-    success_msg = (
-        f"🚀 **FLORAL SPAM ENGINES LAUNCHED!** ⚡\n\n"
-        f"👥 **Active Account Threads:** `{len(active_tasks_config)} Accounts`\n"
-        f"📊 **Messages Sent Counter:** `{stats['sent_count']}`\n"
-        f"🔄 **Auto GC Name Rotation:** `ACTIVE (Target Name + Emojis)` 🔥"
-    )
+    # Render Task Controller Cards Style as shown in screenshots
+    controller_cards = ""
+    for idx, task in enumerate(active_tasks_config):
+        threads_str = ", ".join(task["targets"][:5]) # Displaying target IDs neatly
+        controller_cards += (
+            f"⚙️ **TASK CONTROLLER [T3{idx}69]**\n"
+            f"────────────────────────\n"
+            f"📊 **Status:** 🟢 RUNNING\n"
+            f"🎯 **Target:** `{task['target_name']}`\n"
+            f"📋 **Threads/GCs:** `{threads_str}`...\n"
+            f"✉️ **Total Sent:** `{stats['sent_count']}`\n"
+            f"⏱️ **Live Log:** Cooldown Active ⚡\n\n"
+        )
+
+    success_msg = f"🚀 **SESSION STARTED SUCCESSFULLY!**\n\n{controller_cards}"
+    
+    keyboard = [
+        [InlineKeyboardButton("🛑 Stop Task", callback_data="stop_spam")],
+        [InlineKeyboardButton("⚡ Main Menu", callback_data="refresh_panel")]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
     if query:
-        await query.answer("Engines Blazing Successfully! 🚀")
+        await query.answer("Session Started! 🚀")
         try:
-            await query.message.edit_text(success_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
+            await query.message.edit_text(success_msg, parse_mode="Markdown", reply_markup=reply_markup)
         except Exception:
-            await query.message.reply_text(success_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
+            await query.message.reply_text(success_msg, parse_mode="Markdown", reply_markup=reply_markup)
     else:
-        await chat.reply_text(success_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
+        await chat.reply_text(success_msg, parse_mode="Markdown", reply_markup=reply_markup)
 
 async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global is_running, stop_event
@@ -327,7 +293,7 @@ async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
     chat = query.message if query else update.message
     
     if not is_running:
-        msg = "⚠️ Engines are currently offline."
+        msg = "⚠️ Tasks are currently offline."
         if query:
             await query.answer(msg, show_alert=True)
         else:
@@ -335,9 +301,9 @@ async def stop_spam(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     stop_event.set()
-    stop_msg = f"🛑 **All Engines Terminated!**\n📊 **Total Messages Delivered:** `{stats['sent_count']}`\n⚠️ **Last Status / Error:** `{stats['last_error']}`"
+    stop_msg = f"🛑 **Task Terminated!**\n📊 **Total Messages Delivered:** `{stats['sent_count']}`\n⚠️ **Last Status:** `{stats['last_error']}`"
     if query:
-        await query.answer("Engines Stopped! 🛑")
+        await query.answer("Task Stopped! 🛑")
         try:
             await query.message.edit_text(stop_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
         except Exception:
@@ -350,25 +316,41 @@ async def status_check(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     chat = query.message if query else update.message
     
-    status_msg = (
-        "╔═════════════════════════════╗\n"
-        "     📊 ꜰʟᴏʀᴀʟ ᴅɪᴀɢɴᴏꜱᴛɪᴄꜱ 📊\n"
-        "╚═════════════════════════════╝\n\n"
-        f"🟢 **Engine Status:** `{'🔥 BLAZING LIVE' if is_running else '💤 IDLE / STANDBY'}`\n"
-        f"📤 **Total Messages Sent:** `{stats['sent_count']} Blocks` 🚀\n"
-        f"👥 **Configured Account Tasks:** `{len(active_tasks_config)} Tasks`\n"
-        f"🔄 **Auto GC Name Rotation:** `Dynamic Target Name + Emojis`\n"
-        f"🛡️ **Anti-Ban Diagnostics:** `{stats['last_error']}`\n"
-        f"💎 **Core Matrix:** `Made by Ankit`"
-    )
+    controller_cards = ""
+    if not active_tasks_config:
+        controller_cards = "_No active task controllers found._\n"
+    for idx, task in enumerate(active_tasks_config):
+        controller_cards += (
+            f"⚙️ **TASK CONTROLLER [T3{idx}69]**\n"
+            f"────────────────────────\n"
+            f"📊 **Status:** `{'🟢 RUNNING' if is_running else '💤 IDLE'}`\n"
+            f"🎯 **Target:** `{task['target_name']}`\n"
+            f"✉️ **Total Sent:** `{stats['sent_count']}`\n"
+            f"🛡️ **Diagnostics:** `{stats['last_error']}`\n\n"
+        )
+
+    status_msg = f"📊 **SYSTEM STATUS & CONTROLLERS**\n\n{controller_cards}"
+    
     if query:
-        await query.answer("Diagnostics Refreshed 🔄")
+        await query.answer("Status Refreshed 🔄")
         try:
             await query.message.edit_text(status_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
         except Exception:
             await query.message.reply_text(status_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
     else:
         await chat.reply_text(status_msg, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
+
+async def admin_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    info_text = (
+        "⚙️ **ADMIN INFO**\n\n"
+        "👑 **Bot Owner / Creator:** Ankit\n"
+        "⚡ **System Core:** Selenium Stealth + Multi-threading\n"
+        "🛡️ **Status:** Active & Ready"
+    )
+    if query:
+        await query.answer()
+        await query.message.edit_text(info_text, parse_mode="Markdown", reply_markup=get_back_keyboard())
 
 async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -382,6 +364,8 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await stop_spam(update, context)
     elif data == "status_check":
         await status_check(update, context)
+    elif data == "admin_info":
+        await admin_info(update, context)
     elif data == "refresh_panel":
         if user_id in user_states:
             del user_states[user_id]
@@ -392,19 +376,30 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await cmd_start(update, context)
     elif data == "menu_view_tasks":
         if not active_tasks_config:
-            txt = "📋 **No tasks added yet.**"
+            txt = "📋 **No tasks configured yet.**"
         else:
-            txt = f"📋 **Configured Tasks ({len(active_tasks_config)}):**\n\n"
+            txt = f"📋 **Active Task Controllers ({len(active_tasks_config)}):**\n\n"
             for i, t in enumerate(active_tasks_config):
-                txt += f"**Task #{i+1}:** GCs: `{len(t['targets'])}` | Delay: `{t['delay']}s`\n"
+                txt += f"⚙️ **[T3{i}69] Target:** `{t['target_name']}` | GCs: `{len(t['targets'])}` | Delay: `{t['delay']}s`\n"
         await query.message.edit_text(txt, parse_mode="Markdown", reply_markup=get_back_keyboard())
     elif data == "menu_add_task":
-        user_states[user_id] = {"step": "cookie", "cookie": "", "targets": [], "delay": 8}
+        user_states[user_id] = {"step": "cookie", "cookie": "", "target_name": "", "targets": [], "delay": 8.0}
         await query.message.edit_text(
-            "➕ **ADD ACCOUNT TASK (Step 1/2)**\n\n_Send the raw Instagram `sessionid` for this account:_",
+            "➕ **ADD TASK (Step 1/4)**\n\n_Send the Instagram session ID (`sessionid` cookie):_",
             parse_mode="Markdown",
             reply_markup=get_back_keyboard()
         )
+    elif data.startswith("delay_"):
+        if user_id in user_states and user_states[user_id].get("step") == "delay":
+            delay_val = float(data.split("_")[1])
+            user_states[user_id]["delay"] = delay_val
+            
+            # Save task config
+            active_tasks_config.append(user_states[user_id].copy())
+            del user_states[user_id]
+            
+            success_txt = f"✅ **Task Controller Created Successfully!**\nTotal Active Tasks: `{len(active_tasks_config)}`"
+            await query.message.edit_text(success_txt, parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
 
 async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
@@ -416,22 +411,26 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         if step == "cookie":
             state_data["cookie"] = text
+            state_data["step"] = "target_name"
+            await update.message.reply_text(
+                "🎯 **ADD TASK (Step 2/4)**\n\n_Enter Target Name (e.g. DHURV KINNER or TEST):_",
+                parse_mode="Markdown"
+            )
+        elif step == "target_name":
+            state_data["target_name"] = text
             state_data["step"] = "targets"
             await update.message.reply_text(
-                "🎯 **ADD ACCOUNT TASK (Step 2/2)**\n\n_Send Target GC ID(s) or Name(s) for this account (comma separated if multiple):_",
+                "📋 **ADD TASK (Step 3/4)**\n\n_Send Target GC ID(s) (comma or newline separated):_",
                 parse_mode="Markdown"
             )
         elif step == "targets":
             split_ids = re.split(r'[,\n]+', text)
             state_data["targets"] = [i.strip() for i in split_ids if i.strip()]
-            
-            active_tasks_config.append(state_data.copy())
-            del user_states[user_id]
-            
+            state_data["step"] = "delay"
             await update.message.reply_text(
-                f"✅ **Account Task Saved Successfully!**\nTotal Tasks Saved: `{len(active_tasks_config)}`",
+                "⏱️ **ADD TASK (Step 4/4)**\n\n_Select message delay speed using the buttons below:_",
                 parse_mode="Markdown",
-                reply_markup=get_main_menu_keyboard()
+                reply_markup=get_delay_keyboard()
             )
 
 def main():
@@ -443,7 +442,7 @@ def main():
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
 
     print("╔═══════════════════════════════════════════╗")
-    print("   ⚡ FLORAL NEXUS ONLINE (Ankit) ⚡         ")
+    print("   ⚡ TASK CONTROLLER BOT ONLINE (Ankit) ⚡   ")
     print("╚═══════════════════════════════════════════╝")
     app.run_polling()
 
