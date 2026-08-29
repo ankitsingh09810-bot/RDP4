@@ -20,11 +20,11 @@ logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s", level=lo
 # Hardcoded Telegram Token
 TELEGRAM_BOT_TOKEN = "8926218603:AAH9YcmIRJ6hwLuvGYC-a0bQoZIKw46aC94"
 
-# Runtime Dynamic Storage (Ab target name bhi dynamic ho gaya hai)
+# Runtime Dynamic Storage
 config = {
     "cookie": "",
     "target_id": "",
-    "target_name": "Target",  # Default target name
+    "target_name": "Target",  
     "custom_text": "Bᴏʟᴇ  𝐀 ɴ ᴋ ɪ ᴛ  पिताश्री  Mᴇʀɪ Mᴀ Cʜᴏᴅ Dᴏ"
 }
 
@@ -71,7 +71,6 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_text):
                 if stop_event.is_set(): break
                 driver.switch_to.window(handle)
                 
-                # Dynamic JS Code injected with dynamic target name
                 js_code = """
                 const delay = arguments[0];
                 const targetName = arguments[1];
@@ -80,7 +79,7 @@ def run_agent(agent_id, cookie, target_id, target_name, custom_text):
                 const emojis = ["⟬𝔛𓊈🌀𓊉𝔛⟭", "⟬𝔛𓊈💎𓊉𝔛⟭", "⟬𝔛𓊈❄️𓊉𝔛⟭", "⟬𝔛𓊈🍫𓊉𝔛⟭", "⟬𝔛𓊈🎐𓊉𝔛⟭", "⟬𝔛𓊈🥎𓊉𝔛⟭", "⟬𝔛𓊈💥𓊉𝔛⟭", "⟬𝔛𓊈💢𓊉𝔛⟭", "⟬𝔛𓊈⚾𓊉𝔛⟭", "⟬𝔛𓊈💦𓊉𝔛⟭"];
                 
                 window.__spamInterval = setInterval(() => {
-                    const box = document.querySelector('div[role="textbox'], [contenteditable="true"]');
+                    const box = document.querySelector('div[role="textbox"], [contenteditable="true"]');
                     if (box) {
                         const currentEmoji = emojis[iteration % emojis.length];
                         const line = "[" + targetName + "]" + customText + currentEmoji;
@@ -208,7 +207,7 @@ def main():
     app.add_handler(CommandHandler("stopspam", stop_spam))
     app.add_handler(CommandHandler("status", status_check))
 
-    print("🤖 Dynamic Bot Controller Initialized with Target Name Feature...")
+    print("🤖 Dynamic Bot Controller Initialized successfully...")
     app.run_polling()
 
 if __name__ == "__main__":
