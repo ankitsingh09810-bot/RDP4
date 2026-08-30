@@ -1,4 +1,4 @@
-Name: Phoenix V100 (Telegram Bot Control)
+name: Phoenix V100 (Telegram Bot Control)
 
 on:
   workflow_dispatch:
