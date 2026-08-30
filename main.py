@@ -405,6 +405,9 @@ async def button_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if user_id in user_states and user_states[user_id].get("step") == "delay":
             delay_val = float(data.split("_")[1])
             user_states[user_id]["delay"] = delay_val
+                        delay_val = float(data.split("_")[1])
+            user_states[user_id]["delay"] = delay_val
             active_tasks_config.append(user_states[user_id].copy())
             del user_states[user_id]
-            success_txt = "✅ **Task Created Successfu
+            await query.message.edit_text("✅ Task Added!", parse_mode="Markdown", reply_markup=get_main_menu_keyboard())
+    
