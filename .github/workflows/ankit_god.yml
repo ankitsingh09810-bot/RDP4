@@ -27,5 +27,5 @@ jobs:
 
     - name: Run Ankit God Script
       run: |
-        python bot.py
+        python ankit_god.py
         
