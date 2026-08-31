@@ -21,8 +21,8 @@ from instagrapi.exceptions import (
 )
 
 # ======================== BOT CONFIG ========================
-BOT_TOKEN = "8684651458:AAFSGE0cgk_LZVj0SbNbIDPL62S3DWxumuY[span_0](start_span)"[span_0](end_span)
-ADMIN_ID = 8547639145[span_1](start_span)[span_1](end_span)
+BOT_TOKEN = "8684651458:AAFSGE0cgk_LZVj0SbNbIDPL62S3DWxumuY"
+ADMIN_ID = 8547639145
 
 ALLOWED_USERS = {ADMIN_ID}
 
@@ -111,7 +111,6 @@ def is_authorized(user_id):
     return user_id in ALLOWED_USERS
 
 def delete_msg(chat_id, msg_id):
-    """Silently delete a message to keep chat clean."""
     try:
         bot.delete_message(chat_id, msg_id)
     except:
@@ -132,7 +131,6 @@ def make_bar(percent, length=10):
 # ======================== LIVE LOG EDITOR ========================
 
 def update_task_log(task_id, event_text):
-    """Edits a single message to act as a live dashboard for the running task."""
     task = active_tasks.get(task_id)
     if not task:
         return
@@ -426,4 +424,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n[!] Exited by user.")
         sys.exit(0)
-          
+    
