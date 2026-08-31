@@ -22,7 +22,7 @@ from instagrapi.exceptions import (
 
 # ======================== BOT CONFIG ========================
 BOT_TOKEN = "8684651458:AAFSGE0cgk_LZVj0SbNbIDPL62S3DWxumuY"
-ADMIN_ID = 8547639145
+ADMIN_ID = 6837248644
 
 ALLOWED_USERS = {ADMIN_ID}
 
