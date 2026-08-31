@@ -10,8 +10,8 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, ContextTypes, filters
 
 print("=" * 60)
-print("          🔥 ANKIT GOD SCRIPT (GITHUB EDITION) 🔥          ")
-print("          1000+ GC Enterprise Spammer v10.0 Active          ")
+print("          🔥 ANKIT GOD SCRIPT (ULTIMATE EDITION) 🔥          ")
+print("          Multi-Login & Advanced GC Routing Active            ")
 print("=" * 60)
 
 logging.basicConfig(format='%(asctime)s - [ANKIT_GOD] - %(levelname)s - %(message)s', level=logging.INFO)
@@ -38,6 +38,7 @@ MOBILE_UAS = [
 ]
 
 user_states = {}
+temp_account_data = {}
 active_spammer = None
 
 class BotConfigManager:
@@ -71,19 +72,26 @@ class AWSAccountManager:
     def _save(self):
         with open(ACCOUNTS_FILE, 'w') as f: json.dump(self.accounts, f, indent=2)
 
-    def add(self, username, proxy=None):
-        if not any(a['username'] == username for a in self.accounts):
-            self.accounts.append({
-                'username': username, 
-                'profile_dir': str(PROFILES_DIR / f"acc_{username}"),
-                'logged_in': True,
-                'proxy': proxy,
-                'assigned_gcs': []
-            })
-            self._save()
-            print(f"[+] Account Added Successfully: @{username}")
-            return True
-        return False
+    def add(self, username, password=None, sessionid=None, proxy=None):
+        for acc in self.accounts:
+            if acc['username'] == username:
+                if password: acc['password'] = password
+                if sessionid: acc['sessionid'] = sessionid
+                if proxy: acc['proxy'] = proxy
+                self._save()
+                return True
+
+        self.accounts.append({
+            'username': username, 
+            'password': password,
+            'sessionid': sessionid,
+            'profile_dir': str(PROFILES_DIR / f"acc_{username}"),
+            'proxy': proxy,
+            'assigned_gcs': []
+        })
+        self._save()
+        print(f"[+] Account Added: @{username}")
+        return True
 
     def remove(self, username):
         self.accounts = [a for a in self.accounts if a['username'] != username]
@@ -106,8 +114,10 @@ class AWSAutoDiscoverySpammer:
     async def _worker(self, account_data):
         profile_dir = account_data['profile_dir']
         proxy_url = account_data.get('proxy')
-        assigned_gcs = account_data.get('assigned_gcs', [])
+        sessionid = account_data.get('sessionid')
         username = account_data['username']
+        password = account_data.get('password')
+        assigned_gcs = account_data.get('assigned_gcs', [])
         
         while self.running:
             async with async_playwright() as p:
@@ -128,6 +138,16 @@ class AWSAutoDiscoverySpammer:
                         ignore_https_errors=True
                     )
                     
+                    if sessionid:
+                        await browser.add_cookies([{
+                            "name": "sessionid",
+                            "value": sessionid,
+                            "domain": ".instagram.com",
+                            "path": "/",
+                            "httpOnly": True,
+                            "secure": True
+                        }])
+
                     await browser.add_init_script("""
                         Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
                         window.navigator.chrome = { runtime: {} };
@@ -137,12 +157,23 @@ class AWSAutoDiscoverySpammer:
                     page = await browser.new_page()
                     await page.route("**/*.{png,jpg,jpeg,gif,webp,svg,mp4,webm,ogg,css,font,woff}", lambda route: route.abort())
 
+                    # Auto login if password provided and session not active
+                    if password and not sessionid:
+                        try:
+                            await page.goto("https://www.instagram.com/accounts/login/", timeout=30000)
+                            await asyncio.sleep(3)
+                            await page.fill('input[name="username"]', username)
+                            await page.fill('input[name="password"]', password)
+                            await page.click('button[type="submit"]')
+                            await asyncio.sleep(5)
+                        except:
+                            pass
+
                     target_urls = assigned_gcs
                     if not target_urls:
                         try:
-                            print(f"[ANKIT GOD] Auto-discovering GCs for @{username}...")
                             await page.goto("https://www.instagram.com/direct/inbox/", timeout=35000, wait_until='domcontentloaded')
-                            await asyncio.sleep(random.uniform(3, 5))
+                            await asyncio.sleep(4)
                             links = await page.evaluate("""
                                 Array.from(document.querySelectorAll('a')).map(a => a.href).filter(h => h.includes('/direct/t/'))
                             """)
@@ -159,9 +190,13 @@ class AWSAutoDiscoverySpammer:
                         p_tab = await browser.new_page()
                         await p_tab.route("**/*.{png,jpg,jpeg,gif,webp,svg,mp4,webm,ogg,css,font,woff}", lambda route: route.abort())
                         try:
-                            target_link = url if "instagram.com" in url or "ig.me" in url else f"https://www.instagram.com/direct/t/{url}/"
-                            if target_link.startswith("http://"):
-                                target_link = target_link.replace("http://", "https://")
+                            # Support for Thread ID, Thread Number, or Direct Invite Link
+                            if url.isdigit() or len(url) > 12 and "/" not in url:
+                                target_link = f"https://www.instagram.com/direct/t/{url}/"
+                            elif "instagram.com" in url or "ig.me" in url:
+                                target_link = url.replace("http://", "https://")
+                            else:
+                                target_link = f"https://www.instagram.com/direct/t/{url}/"
                             
                             await p_tab.goto(target_link, timeout=30000, wait_until='domcontentloaded')
                             await p_tab.wait_for_selector(PRIMARY_SELECTOR, timeout=12000)
@@ -183,7 +218,6 @@ class AWSAutoDiscoverySpammer:
                             if msg_counter >= 30:
                                 msg_counter = 0
                                 rest_time = random.uniform(15.0, 30.0)
-                                print(f"[ANKIT GOD] Account @{username} taking a human rest pause for {rest_time:.1f}s...")
                                 await asyncio.sleep(rest_time)
 
                             emojis = ["💙", "❤️", "💚", "💛", "💜", "🖤", "🤍", "🤎", "🧡", "💖"]
@@ -209,7 +243,7 @@ class AWSAutoDiscoverySpammer:
                                 print(f"[ANKIT GOD] Sent Message #{self.total_sent} via @{username}")
                             except Exception as ex:
                                 self.errors_count += 1
-                                print(f"[ANKIT GOD ERROR] Failed to send message via @{username}: {ex}")
+                                print(f"[ANKIT GOD ERROR] Failed: {ex}")
 
                             d_min = config_mgr.config.get("delay_min", 1.2)
                             d_max = config_mgr.config.get("delay_max", 2.8)
@@ -219,7 +253,7 @@ class AWSAutoDiscoverySpammer:
 
                 except Exception as e:
                     self.errors_count += 1
-                    print(f"[ANKIT GOD CRITICAL] Worker error on @{username}: {e}")
+                    print(f"[ANKIT GOD CRITICAL] Worker error: {e}")
                     await asyncio.sleep(20)
                 finally:
                     if browser:
@@ -227,7 +261,6 @@ class AWSAutoDiscoverySpammer:
                         except: pass
 
     async def run(self):
-        print("[ANKIT GOD SCRIPT] Starting multi-worker threads...")
         tasks = [asyncio.create_task(self._worker(acc)) for acc in self.accounts]
         try:
             await asyncio.gather(*tasks)
@@ -247,10 +280,11 @@ def get_main_menu():
 
 def get_account_menu():
     keyboard = [
-        [InlineKeyboardButton("➕ Add Account", callback_data="acc_add"),
-         InlineKeyboardButton("📋 List Accounts", callback_data="acc_list")],
-        [InlineKeyboardButton("🔗 Bind GCs", callback_data="acc_bind_gcs"),
-         InlineKeyboardButton("🗑️ Remove Account", callback_data="acc_remove_prompt")],
+        [InlineKeyboardButton("➕ Add Account (Password)", callback_data="acc_add_pwd"),
+         InlineKeyboardButton("➕ Add Account (SessionID)", callback_data="acc_add_sid")],
+        [InlineKeyboardButton("📋 List Accounts", callback_data="acc_list"),
+         InlineKeyboardButton("🔗 Bind GCs", callback_data="acc_bind_gcs")],
+        [InlineKeyboardButton("🗑️ Remove Account", callback_data="acc_remove_prompt")],
         [InlineKeyboardButton("🔙 Back to Main Menu", callback_data="menu_home")]
     ]
     return InlineKeyboardMarkup(keyboard)
@@ -264,13 +298,13 @@ def get_config_menu():
     return InlineKeyboardMarkup(keyboard)
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = "🔥 **ANKIT GOD SCRIPT CONTROL PANEL** 🔥\n\nGitHub Hosted Mode Ready. 👇"
+    text = "🔥 **ANKIT GOD SCRIPT CONTROL PANEL** 🔥\n\nChoose an option below:"
     if update.message:
         await update.message.reply_text(text, reply_markup=get_main_menu(), parse_mode="Markdown")
     elif update.callback_query:
         query = update.callback_query
         await query.answer()
-        await query.edit_message_text(text, reply_markup=get_main_menu(), parse_Mode="Markdown")
+        await query.edit_message_text(text, reply_markup=get_main_menu(), parse_mode="Markdown")
 
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     global active_spammer
@@ -283,20 +317,25 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user_states.pop(user_id, None)
         await query.edit_message_text("🔥 **Main Menu:**", reply_markup=get_main_menu(), parse_mode="Markdown")
     elif data == "menu_accounts":
+        user_states.pop(user_id, None)
         await query.edit_message_text("👤 **Account Hub:**", reply_markup=get_account_menu(), parse_mode="Markdown")
-    elif data == "acc_add":
-        user_states[user_id] = "waiting_for_username"
-        await query.edit_message_text("➕ **Add Account:**\n\nInstagram Username bhejein:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]), parse_mode="Markdown")
+    elif data == "acc_add_pwd":
+        user_states[user_id] = "waiting_for_username_pwd"
+        await query.edit_message_text("➕ **Add Account via Password:**\n\nInstagram Username bhejein:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]), parse_mode="Markdown")
+    elif data == "acc_add_sid":
+        user_states[user_id] = "waiting_for_username_sid"
+        await query.edit_message_text("➕ **Add Account via Session ID:**\n\nInstagram Username bhejein:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]), parse_mode="Markdown")
     elif data == "acc_list":
         accounts = mgr.get_all()
         text = "📊 **Account Status:**\n\n"
         for acc in accounts:
-            text += f"• `@{acc['username']}` | GCs: {len(acc.get('assigned_gcs', []))}\n"
+            login_type = "🔑 Pwd" if acc.get('password') else ("🍪 SessionID" if acc.get('sessionid') else "❌ None")
+            text += f"• `@{acc['username']}` | Mode: {login_type} | GCs: {len(acc.get('assigned_gcs', []))}\n"
         if not accounts: text = "❌ Koi account added nahi hai!"
         await query.edit_message_text(text, reply_markup=get_account_menu(), parse_mode="Markdown")
     elif data == "acc_bind_gcs":
         user_states[user_id] = "waiting_bind_gcs"
-        await query.edit_message_text("🔗 **Bind GCs:**\n\nFormat:\n`username | link1,link2`", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]), parse_mode="Markdown")
+        await query.edit_message_text("🔗 **Bind GCs:**\n\nFormat:\n`username | link_or_thread_id1, thread_id2`\n\n*(Support: Invite Link, Thread ID, ya Thread Number)*", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]), parse_mode="Markdown")
     elif data == "acc_remove_prompt":
         user_states[user_id] = "waiting_for_remove"
         await query.edit_message_text("🗑️ **Remove Account:**\n\nUsername bhejein:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]), parse_mode="Markdown")
@@ -311,7 +350,7 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not accounts:
             await query.edit_message_text("❌ Pehle accounts add karein!", reply_markup=get_main_menu())
             return
-        await query.edit_message_text(f"🚀 **ANKIT GOD Attack Started!**\nTarget: `{target}` | Secure IDs: {len(accounts)}", reply_markup=get_main_menu(), parse_mode="Markdown")
+        await query.edit_message_text(f"🚀 **ANKIT GOD Attack Started!**\nTarget: `{target}` | Active IDs: {len(accounts)}", reply_markup=get_main_menu(), parse_mode="Markdown")
         active_spammer = AWSAutoDiscoverySpammer(accounts, target)
         asyncio.create_task(active_spammer.run())
     elif data == "menu_status":
@@ -332,41 +371,39 @@ async def handle_text_input(update: Update, context: ContextTypes.DEFAULT_TYPE):
     state = user_states.get(user_id)
     text = update.message.text.strip()
 
-    if state == "waiting_for_username":
-        added = mgr.add(text)
+    if not state:
+        return
+
+    if state == "waiting_for_username_pwd":
+        temp_account_data[user_id] = {"username": text, "type": "pwd"}
+        user_states[user_id] = "waiting_for_password"
+        await update.message.reply_text("🔑 Ab Instagram ka **Password** bhejein:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]))
+
+    elif state == "waiting_for_password":
+        data_dict = temp_account_data.get(user_id, {})
+        username = data_dict.get("username")
+        password = text
+        mgr.add(username, password=password)
         user_states.pop(user_id, None)
-        await update.message.reply_text(f"✅ Account `@{text}` added successfully!" if added else "⚠️ Pehle se added hai.", reply_markup=get_main_menu(), parse_mode="Markdown")
+        temp_account_data.pop(user_id, None)
+        await update.message.reply_text(f"✅ Account `@{username}` password ke sath add ho gaya!", reply_markup=get_main_menu(), parse_mode="Markdown")
+
+    elif state == "waiting_for_username_sid":
+        temp_account_data[user_id] = {"username": text, "type": "sid"}
+        user_states[user_id] = "waiting_for_sessionid"
+        await update.message.reply_text("🍪 Ab Instagram ka **sessionid cookie** bhejein:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Cancel", callback_data="menu_accounts")]]))
+
+    elif state == "waiting_for_sessionid":
+        data_dict = temp_account_data.get(user_id, {})
+        username = data_dict.get("username")
+        sessionid = text
+        mgr.add(username, sessionid=sessionid)
+        user_states.pop(user_id, None)
+        temp_account_data.pop(user_id, None)
+        await update.message.reply_text(f"✅ Account `@{username}` session ID ke sath add ho gaya!", reply_markup=get_main_menu(), parse_mode="Markdown")
+
     elif state == "waiting_bind_gcs":
         user_states.pop(user_id, None)
         if "|" in text:
             acc_name, links_str = [x.strip() for x in text.split("|", 1)]
-            links = [l.strip() for l in links_str.split(",") if l.strip()]
-            for acc in mgr.accounts:
-                if acc['username'] == acc_name:
-                    acc['assigned_gcs'] = links
-            mgr._save()
-            await update.message.reply_text(f"✅ Account `@{acc_name}` ke sath GCs bind ho gaye!", reply_markup=get_main_menu(), parse_Mode="Markdown")
-        else:
-            await update.message.reply_text("❌ Format galat hai!", reply_markup=get_main_menu(), parse_mode="Markdown")
-    elif state == "waiting_for_remove":
-        mgr.remove(text)
-        user_states.pop(user_id, None)
-        await update.message.reply_text(f"🗑️ Account hata diya gaya.", reply_markup=get_main_menu(), parse_mode="Markdown")
-    elif state == "waiting_for_target":
-        config_mgr.config["target"] = text
-        config_mgr.save()
-        user_states.pop(user_id, None)
-        await update.message.reply_text(f"✅ Target updated: `{text}`", reply_markup=get_main_menu(), parse_mode="Markdown")
-
-def main():
-    TOKEN = "8684651458:AAFSGE0cgk_LZVj0SbNbIDPL62S3DWxumuY"
-    app = ApplicationBuilder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(button_handler))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text_input))
-    print("[ANKIT GOD SCRIPT] Telegram Bot Polling Started Successfully...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    asyncio.run(main())
-        
+            links = [l.strip() 
