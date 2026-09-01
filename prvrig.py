@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/init/env python3
 # -*- coding: utf-8 -*-
 
 import os
@@ -6,6 +6,7 @@ import sys
 import time
 import random
 import threading
+import gc
 import platform
 import psutil
 from datetime import datetime
@@ -20,85 +21,86 @@ from instagrapi.exceptions import (
     LoginRequired,
 )
 
-# ======================== BOT CONFIG ========================
+# ======================== CONFIG ========================
 BOT_TOKEN = "8684651458:AAFSGE0cgk_LZVj0SbNbIDPL62S3DWxumuY"
-ADMIN_ID = 6837248644
+ADMIN_ID = 6837248644  # Aapki nayi wali Admin/Owner ID
 
 ALLOWED_USERS = {ADMIN_ID}
 
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode="HTML")
 
-BASE_TEMPLATE = """<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -⚡-
+# 🔥 UNIFORM TEMPLATE 🔥
+BASE_TEMPLATE = """<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾⚡﴿
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🌀-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾💎﴿
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🪷-
-
-
-
-
-
-
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🌱-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾👑﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -😂-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾🌌﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🤣-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾🎯﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🥳-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾🌊﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -❄️-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾🚀﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -☔-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾🌪️﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🌈-
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾💫﴿
 
 
 
 
 
 
-<{TARGET}> Kɪ Mᴀᴀ Mᴏᴛɪ !< Gᴀɴᴅ Wᴀʟɪ> Rᴀɴᴅ!> -🌒-"""
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾🔥﴿
 
-MAX_RETRIES = 5
+
+
+
+
+
+<{TARGET}> Ρʏᴛʜ𝙤𝚗 𝚜є ᴛ𝘳ꪗ ʍꪖꪖ ᴄᴏ∂ʊ ʏᴀ ꫝᴜᴛᴏᴍᱟ 𝘴ᴇ: ̗̀⟼ ﴾✨﴿"""
+
+MAX_RETRIES = 3
 
 user_setups = {}
 active_tasks = {}
@@ -120,9 +122,6 @@ def get_system_uptime():
     boot_time = datetime.fromtimestamp(psutil.boot_time())
     return str(datetime.now() - boot_time).split('.')[0]
 
-def get_bot_uptime():
-    return str(datetime.now() - BOT_START_TIME).split('.')[0]
-
 def make_bar(percent, length=10):
     filled = int(round(length * percent / 100))
     return '█' * filled + '░' * (length - filled)
@@ -137,18 +136,18 @@ def update_task_log(task_id, event_text):
     
     chat_id = task["chat_id"]
     target = task["target_name"]
-    threads = ", ".join(str(t) for t in task["thread_ids"])
+    threads_count = len(task["thread_ids"])
     sent = task.get("msg_count", 0)
     log_msg_id = task.get("log_msg_id")
     
     status_icon = "🟢 RUNNING" if task["running"] else "🛑 STOPPED"
     
     dashboard = (
-        f"⚙️ <b>TASK CONTROLLER [<code>{task_id}</code>]</b>\n"
-        "━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⚡ <b>HIGH-SPEED TASK [<code>{task_id}</code>]</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"📊 <b>Status:</b> {status_icon}\n"
         f"🎯 <b>Target:</b> {target}\n"
-        f"📋 <b>Threads:</b> <code>{threads}</code>\n"
+        f"🔗 <b>Active GCs:</b> <code>{threads_count} GCs</code>\n"
         f"📨 <b>Total Sent:</b> <code>{sent}</code>\n\n"
         "📝 <b>Live Log:</b>\n"
         f"<i>{event_text}</i>"
@@ -170,10 +169,8 @@ def update_task_log(task_id, event_text):
         else:
             msg = bot.send_message(chat_id, dashboard, reply_markup=markup, parse_mode="HTML")
             task["log_msg_id"] = msg.message_id
-    except telebot.apihelper.ApiTelegramException as e:
-        if "message to edit not found" in str(e):
-            msg = bot.send_message(chat_id, dashboard, reply_markup=markup, parse_mode="HTML")
-            task["log_msg_id"] = msg.message_id
+    except:
+        pass
 
 
 # ======================== INSTAGRAM WORKER ========================
@@ -189,35 +186,25 @@ def send_message_with_retry(client, thread_id, message, task_id):
             client.direct_send(message, thread_ids=[thread_id])
             GLOBAL_MESSAGES_SENT += 1
             active_tasks[task_id]["msg_count"] += 1
-            update_task_log(task_id, f"✅ Sent message to <code>{thread_id}</code>")
+            update_task_log(task_id, f"✅ Sent message to GC: <code>{thread_id}</code>")
             return True
         except RateLimitError:
-            wait = 120 * attempt
-            update_task_log(task_id, f"⚠️ Rate Limit: Pausing {wait}s ({attempt}/{MAX_RETRIES})")
+            wait = 60 * attempt
+            update_task_log(task_id, f"⚠️ Rate Limit: Resting {wait}s")
             time.sleep(wait)
         except PleaseWaitFewMinutes:
-            wait = 300
-            update_task_log(task_id, f"⏳ 'Please Wait' API Block: Pausing {wait}s")
-            time.sleep(wait)
+            time.sleep(150)
         except ChallengeRequired:
-            update_task_log(task_id, "🔒 Challenge Required! Pausing for 1 hour.")
-            time.sleep(3600)
+            update_task_log(task_id, "🔒 Challenge Required! Pausing...")
+            time.sleep(1200)
         except (ClientForbiddenError, LoginRequired):
             active_tasks[task_id]["running"] = False
-            update_task_log(task_id, "🔐 Session Expired! Task killed.")
+            update_task_log(task_id, "🔐 Session Expired!")
             return False
         except Exception as e:
-            wait = 30 * attempt
-            update_task_log(task_id, f"❌ Err: {str(e)[:40]}... Retrying in {wait}s")
-            time.sleep(wait)
+            time.sleep(10)
 
-    update_task_log(task_id, f"❌ Failed after {MAX_RETRIES} attempts. Skipping thread.")
     return False
-
-def generate_random_band():
-    min_delay = random.uniform(25, 45)
-    spread = random.uniform(5, 15)
-    return (min_delay, min(min_delay + spread, 60))
 
 def worker_thread(task_id):
     task = active_tasks[task_id]
@@ -225,51 +212,68 @@ def worker_thread(task_id):
     thread_ids = task["thread_ids"]
     target_name = task["target_name"]
     
-    update_task_log(task_id, "🔄 Authenticating Instagram Session...")
+    update_task_log(task_id, "🔄 Connecting session for multiple GCs...")
     
     cl = Client()
     try:
         cl.login_by_sessionid(session_id)
-        update_task_log(task_id, f"✅ Verified! Logged in as: {cl.user_id}")
+        update_task_log(task_id, f"✅ Logged in successfully!")
     except Exception as e:
         task["running"] = False
-        update_task_log(task_id, f"❌ Login Failed: {str(e)[:50]}")
+        update_task_log(task_id, f"❌ Login Failed: {str(e)[:40]}")
         return
 
     msg_template = BASE_TEMPLATE.replace("{TARGET}", target_name)
-    current_band = generate_random_band()
-    last_band_change = time.time()
-    band_interval = random.uniform(3600, 7200)
     round_num = 0
+
+    thread_msg_counts = {tid: 0 for tid in thread_ids}
+    current_group_titles = {tid: target_name for tid in thread_ids}
 
     while task.get("running", False):
         try:
             round_num += 1
-            update_task_log(task_id, f"🔄 Starting Round {round_num}...")
+            update_task_log(task_id, f"🔄 Running Loop Round {round_num}...")
 
             for thread_id in thread_ids:
                 if not task.get("running", False):
                     break
 
-                num = random.randint(1, 10**10)
-                full_msg = f"{num}\n\n{msg_template}" if random.choice([True, False]) else f"{msg_template}\n\n{num}"
+                # Footer with dynamic timer and signature
+                current_time = datetime.now().strftime("%H:%M:%S")
+                footer_signature = f"ꜱᴄʀɪᴩᴛ ᴍᴀᴅᴇ ʙʏ 𝐀ɴᴋɪᴛ अब्बू  [{current_time}]"
+                
+                full_msg = f"{msg_template}\n\n{footer_signature}"
 
-                send_message_with_retry(cl, thread_id, full_msg, task_id)
+                success = send_message_with_retry(cl, thread_id, full_msg, task_id)
+                
+                if success:
+                    thread_msg_counts[thread_id] += 1
 
-                delay = random.uniform(current_band[0], current_band[1])
-                update_task_log(task_id, f"⏱️ Cooldown... Waiting {delay:.1f}s")
+                # 🔥 EVERY 10 MESSAGES -> AUTO NC CHANGE WITH RANDOM EMOJI 🔥
+                if thread_msg_counts[thread_id] >= 10:
+                    try:
+                        rand_emoji = random.choice(["🔥", "⚡", "💎", "👑", "🚀", "💀", "🌪️", "💫", "🎯", "🗿", "🧨", "🌀", "⭐", "🔥"])
+                        new_nc = f"<{target_name}>𝖲ʟᴀꪜɛꜱ 𝖢ꪊ𝖣𝖗ꪖɪ {rand_emoji}"
+                        
+                        if new_nc != current_group_titles.get(thread_id):
+                            cl.direct_thread_update_title(thread_id, new_nc)
+                            current_group_titles[thread_id] = new_nc
+                            update_task_log(task_id, f"🔄 NC Updated on GC <code>{thread_id}</code>")
+                    except Exception as nc_err:
+                        pass
+                    
+                    thread_msg_counts[thread_id] = 0
+
+                delay = random.uniform(8, 14)
                 time.sleep(delay)
 
-                if time.time() - last_band_change >= band_interval:
-                    current_band = generate_random_band()
-                    last_band_change = time.time()
-                    band_interval = random.uniform(3600, 7200)
+            gc.collect()
 
         except Exception as e:
-            update_task_log(task_id, f"💥 Loop crash: {str(e)[:40]}... Resting 60s.")
-            time.sleep(60)
+            time.sleep(30)
 
-    update_task_log(task_id, "🛑 Task has been safely stopped.")
+    update_task_log(task_id, "🛑 Task safely stopped.")
+    gc.collect()
 
 
 # ======================== INTERACTIVE UI ========================
@@ -277,13 +281,13 @@ def worker_thread(task_id):
 def send_main_menu(chat_id, msg_to_edit=None):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
-        types.InlineKeyboardButton("🚀 Start Session", callback_data="menu_start"),
-        types.InlineKeyboardButton("📊 Status", callback_data="menu_status")
+        types.InlineKeyboardButton("🚀 Start High-Speed Task", callback_data="menu_start"),
+        types.InlineKeyboardButton("📊 System RAM/CPU", callback_data="menu_status")
     )
     if chat_id == ADMIN_ID:
         markup.add(types.InlineKeyboardButton("⚙️ Admin Info", callback_data="menu_admin"))
         
-    text = "🤖 <b>MAIN MENU</b>\nSelect an operation:"
+    text = "👑 <b>ANKIT CONTROL PANEL</b>\nSelect an option below:"
     
     if msg_to_edit:
         bot.edit_message_text(text, chat_id, msg_to_edit, reply_markup=markup, parse_mode="HTML")
@@ -310,36 +314,30 @@ def callback_query(call):
     if call.data == "menu_start":
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("🔙 Cancel", callback_data="menu_back"))
-        bot.edit_message_text("👋 <b>Setup:</b>\n\nPaste your Instagram <b>sessionid</b> cookie:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
+        bot.edit_message_text("👋 <b>Setup Wizard:</b>\n\nPaste your Instagram <b>sessionid</b> cookie:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
         user_setups[chat_id] = {"menu_id": menu_id, "step": "session"}
         bot.register_next_step_handler_by_chat_id(chat_id, setup_flow)
         
     elif call.data == "menu_status":
         cpu_usage = psutil.cpu_percent(interval=0.2)
         ram = psutil.virtual_memory()
-        disk = psutil.disk_usage('/')
         
         active_count = len([t for t in active_tasks.values() if t["running"]])
         
         dashboard = (
-            "🖥️ <b>SYSTEM STATUS</b>\n"
-            "━━━━━━━━━━━━━\n"
-            f"⏱️ <b>Uptime:</b> <code>{get_system_uptime()}</code>\n"
-            f"⚙️ <b>CPU:</b> {make_bar(cpu_usage)} {cpu_usage}%\n"
-            f"🧠 <b>RAM:</b> {make_bar(ram.percent)} {ram.percent}%\n"
-            f"💾 <b>DSK:</b> {make_bar(disk.percent)} {disk.percent}%\n\n"
-            "🤖 <b>BOT TELEMETRY</b>\n"
-            "━━━━━━━━━━━━━\n"
-            f"⚡ <b>Active Sessions:</b> <code>{active_count}</code>\n"
-            f"📨 <b>Global Messages:</b> <code>{GLOBAL_MESSAGES_SENT}</code>\n\n"
-            "✨ <i>Credits: ρ 𝕣 ꪜ 𝕣 अब्बू ☽</i>"
+            "🖥️ <b>RDP PERFORMANCE MONITOR</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⚙️ <b>CPU Usage:</b> {make_bar(cpu_usage)} {cpu_usage}%\n"
+            f"🧠 <b>RAM Usage:</b> {make_bar(ram.percent)} {ram.percent}%\n"
+            f"⚡ <b>Active Tasks:</b> <code>{active_count}</code>\n"
+            f"📨 <b>Global Sent:</b> <code>{GLOBAL_MESSAGES_SENT}</code>"
         )
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("🔙 Back", callback_data="menu_back"))
         bot.edit_message_text(dashboard, chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
         
     elif call.data == "menu_admin":
-        text = "⚙️ <b>Admin Config:</b>\n\n<code>/adduser [ID]</code> - Auth user\n<code>/deluser [ID]</code> - Revoke user\n<code>/users</code> - List users"
+        text = f"⚙️ <b>Admin Config:</b>\n\nOwner ID: <code>{ADMIN_ID}</code>\nStatus: Online & Optimized."
         markup = types.InlineKeyboardMarkup()
         markup.add(types.InlineKeyboardButton("🔙 Back", callback_data="menu_back"))
         bot.edit_message_text(text, chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
@@ -352,14 +350,14 @@ def callback_query(call):
         tid = call.data.split("_")[1]
         if tid in active_tasks:
             active_tasks[tid]["running"] = False
-            update_task_log(tid, "🛑 Force stop requested. Shutting down...")
+            update_task_log(tid, "🛑 Force stopping task...")
             bot.answer_callback_query(call.id, "Stopping Task...", show_alert=False)
 
     elif call.data.startswith("del_log_"):
         bot.delete_message(chat_id, call.message.message_id)
 
 
-# ======================== CLEAN SETUP FLOW ========================
+# ======================== SETUP FLOW ========================
 
 def setup_flow(message):
     chat_id = message.chat.id
@@ -380,14 +378,14 @@ def setup_flow(message):
 
     if step == "session":
         user_setups[chat_id]["session_id"] = message.text.strip()
-        bot.edit_message_text("📋 <b>Setup:</b>\n\nEnter <b>Thread ID(s)</b>:\n<i>(Comma separated for multiple)</i>", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
+        bot.edit_message_text("📋 <b>Setup:</b>\n\nEnter <b>Thread ID(s)</b>:\n<i>(Comma separated)</i>", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
         user_setups[chat_id]["step"] = "threads"
         bot.register_next_step_handler_by_chat_id(chat_id, setup_flow)
 
     elif step == "threads":
         thread_ids = [int(t.strip()) for t in message.text.split(",") if t.strip().isdigit()]
         if not thread_ids:
-            bot.edit_message_text("❌ <b>Error:</b> No valid numbers found. Try again:\nEnter <b>Thread ID(s)</b>:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
+            bot.edit_message_text("❌ <b>Error:</b> No valid numbers found. Enter Thread IDs:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
             bot.register_next_step_handler_by_chat_id(chat_id, setup_flow)
             return
 
@@ -416,9 +414,8 @@ def setup_flow(message):
         threading.Thread(target=worker_thread, args=(task_id,), daemon=True).start()
 
 
-# ======================== START POLLING ========================
 if __name__ == "__main__":
-    print("🤖 Clean Bot is starting polling...")
+    print("[ANKIT BOT] Online with Updated Admin ID! 👑 (Owner: Ankit अब्बू)")
     try:
         bot.infinity_polling()
     except KeyboardInterrupt:
