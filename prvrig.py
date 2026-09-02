@@ -139,15 +139,17 @@ def update_task_log(task_id, event_text):
     threads_count = len(task["thread_ids"])
     sent = task.get("msg_count", 0)
     log_msg_id = task.get("log_msg_id")
+    speed_label = task.get("speed_label", "Custom")
     
     status_icon = "🟢 RUNNING" if task["running"] else "🛑 STOPPED"
     
     dashboard = (
-        f"⚡ <b>SAFE-SPEED TASK [<code>{task_id}</code>]</b>\n"
+        f"⚡ <b>TASK [<code>{task_id}</code>]</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"📊 <b>Status:</b> {status_icon}\n"
         f"🎯 <b>Target:</b> {target}\n"
-        f"🔗 <b>Active GCs:</b> <code>{threads_count} GCs (2-3s Delay)</code>\n"
+        f"⏱️ <b>Speed:</b> <code>{speed_label}</code>\n"
+        f"🔗 <b>Active GCs:</b> <code>{threads_count} GCs</code>\n"
         f"📨 <b>Total Sent:</b> <code>{sent}</code>\n\n"
         "📝 <b>Live Log:</b>\n"
         f"<i>{event_text}</i>"
@@ -211,13 +213,14 @@ def worker_thread(task_id):
     session_id = task["session_id"]
     thread_ids = task["thread_ids"]
     target_name = task["target_name"]
+    speed_range = task["speed_range"]
     
-    update_task_log(task_id, "🔄 Connecting session for safe sequential loop...")
+    update_task_log(task_id, "🔄 Connecting session...")
     
     cl = Client()
     try:
         cl.login_by_sessionid(session_id)
-        update_task_log(task_id, f"✅ Logged in! Starting 2-3s delay cycle...")
+        update_task_log(task_id, f"✅ Logged in successfully!")
     except Exception as e:
         task["running"] = False
         update_task_log(task_id, f"❌ Login Failed: {str(e)[:40]}")
@@ -238,7 +241,6 @@ def worker_thread(task_id):
                 if not task.get("running", False):
                     break
 
-                # Footer with dynamic timer and custom signature requested by you
                 current_time = datetime.now().strftime("%H:%M:%S")
                 footer_signature = f"𝐀 ɴ ᴋ ɪ ᴛ अब्बू ¿𑁍ࠬܓ🩷  [{current_time}]"
                 full_msg = f"{msg_template}\n\n{footer_signature}"
@@ -248,7 +250,7 @@ def worker_thread(task_id):
                 if success:
                     thread_msg_counts[thread_id] += 1
 
-                # 🔥 EVERY 10 MESSAGES -> AUTO NC CHANGE WITH RANDOM EMOJI 🔥
+                # 🔥 EVERY 10 MESSAGES -> AUTO NC CHANGE 🔥
                 if thread_msg_counts[thread_id] >= 10:
                     try:
                         rand_emoji = random.choice(["🔥", "⚡", "💎", "👑", "🚀", "💀", "🌪️", "💫", "🎯", "🗿", "🧨", "🌀", "⭐", "🔥"])
@@ -263,8 +265,8 @@ def worker_thread(task_id):
                     
                     thread_msg_counts[thread_id] = 0
 
-                # 🔥 SAFE RANDOM DELAY: Exactly 2 to 3 seconds between each message 🔥
-                delay = random.uniform(2.0, 3.0)
+                # 🔥 CUSTOM CHOSEN DELAY RANGE 🔥
+                delay = random.uniform(speed_range[0], speed_range[1])
                 time.sleep(delay)
 
             gc.collect()
@@ -281,7 +283,7 @@ def worker_thread(task_id):
 def send_main_menu(chat_id, msg_to_edit=None):
     markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
-        types.InlineKeyboardButton("🚀 Start Safe Task", callback_data="menu_start"),
+        types.InlineKeyboardButton("🚀 Start Task", callback_data="menu_start"),
         types.InlineKeyboardButton("📊 System RAM / CPU Status", callback_data="menu_status")
     )
     if chat_id == ADMIN_ID:
@@ -321,7 +323,6 @@ def callback_query(call):
     elif call.data == "menu_status":
         cpu_usage = psutil.cpu_percent(interval=0.2)
         ram = psutil.virtual_memory()
-        
         active_count = len([t for t in active_tasks.values() if t["running"]])
         
         dashboard = (
@@ -346,6 +347,28 @@ def callback_query(call):
         bot.clear_step_handler_by_chat_id(chat_id)
         send_main_menu(chat_id, menu_id)
         
+    elif call.data.startswith("speed_"):
+        # Speed choice handler
+        speed_key = call.data.split("_")[1]
+        speeds = {
+            "s1": ((0.1, 0.4), "0.1s - 0.4s (Ultra Fast)"),
+            "s2": ((0.5, 0.9), "0.50s - 0.90s (Fast)"),
+            "s3": ((2.0, 3.0), "2s - 3s (Safe)"),
+            "s4": ((6.0, 8.0), "6s - 8s (Slow)")
+        }
+        
+        if speed_key in speeds and chat_id in user_setups:
+            user_setups[chat_id]["speed_range"] = speeds[speed_key][0]
+            user_setups[chat_id]["speed_label"] = speeds[speed_key][1]
+            
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(types.InlineKeyboardButton("🔙 Cancel", callback_data="menu_back"))
+            menu_id = user_setups[chat_id]["menu_id"]
+            
+            bot.edit_message_text("🎯 <b>Setup:</b>\n\nEnter the <b>Target Name</b>:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
+            user_setups[chat_id]["step"] = "target"
+            bot.register_next_step_handler_by_chat_id(chat_id, setup_flow)
+
     elif call.data.startswith("kill_"):
         tid = call.data.split("_")[1]
         if tid in active_tasks:
@@ -390,9 +413,18 @@ def setup_flow(message):
             return
 
         user_setups[chat_id]["thread_ids"] = thread_ids
-        bot.edit_message_text("🎯 <b>Setup:</b>\n\nEnter the <b>Target Name</b>:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
-        user_setups[chat_id]["step"] = "target"
-        bot.register_next_step_handler_by_chat_id(chat_id, setup_flow)
+        
+        # 🔥 SPEED SELECTION MENU 🔥
+        speed_markup = types.InlineKeyboardMarkup(row_width=1)
+        speed_markup.add(
+            types.InlineKeyboardButton("🚀 0.1s - 0.4s (Ultra Fast)", callback_data="speed_s1"),
+            types.InlineKeyboardButton("⚡ 0.50s - 0.90s (Fast)", callback_data="speed_s2"),
+            types.InlineKeyboardButton("🛡️ 2s - 3s (Safe)", callback_data="speed_s3"),
+            types.InlineKeyboardButton("🐢 6s - 8s (Slow)", callback_data="speed_s4"),
+            types.InlineKeyboardButton("🔙 Cancel", callback_data="menu_back")
+        )
+        bot.edit_message_text("⏱️ <b>Select Speed / Delay Profile:</b>", chat_id, menu_id, reply_markup=speed_markup, parse_mode="HTML")
+        user_setups[chat_id]["step"] = "speed"
 
     elif step == "target":
         target_name = message.text.strip()
@@ -403,6 +435,8 @@ def setup_flow(message):
             "session_id": user_setups[chat_id]["session_id"],
             "thread_ids": user_setups[chat_id]["thread_ids"],
             "target_name": target_name,
+            "speed_range": user_setups[chat_id]["speed_range"],
+            "speed_label": user_setups[chat_id]["speed_label"],
             "running": True,
             "msg_count": 0,
             "log_msg_id": None
@@ -415,10 +449,10 @@ def setup_flow(message):
 
 
 if __name__ == "__main__":
-    print("[ANKIT BOT] Online with Custom Signature! 👑 (Owner: 𝐀 ɴ ᴋ ɪ ᴛ अब्बू ¿𑁍ࠬܓ🩷)")
+    print("[ANKIT BOT] Online with Dynamic Speed Controller! 👑 (Owner: 𝐀 ɴ ᴋ ɪ ᴛ अब्बू ¿𑁍ࠬܓ🩷)")
     try:
         bot.infinity_polling()
     except KeyboardInterrupt:
         print("\n[!] Exited by user.")
         sys.exit(0)
-    
+                                                    
