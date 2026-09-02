@@ -23,7 +23,7 @@ from instagrapi.exceptions import (
 
 # ======================== CONFIG ========================
 BOT_TOKEN = "8684651458:AAFSGE0cgk_LZVj0SbNbIDPL62S3DWxumuY"
-ADMIN_ID = 6837248644  # Aapki nayi wali Admin/Owner ID
+ADMIN_ID = 6837248644  # Aapki Admin/Owner ID
 
 ALLOWED_USERS = {ADMIN_ID}
 
@@ -143,11 +143,11 @@ def update_task_log(task_id, event_text):
     status_icon = "🟢 RUNNING" if task["running"] else "🛑 STOPPED"
     
     dashboard = (
-        f"⚡ <b>HIGH-SPEED TASK [<code>{task_id}</code>]</b>\n"
+        f"⚡ <b>SAFE-SPEED TASK [<code>{task_id}</code>]</b>\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         f"📊 <b>Status:</b> {status_icon}\n"
         f"🎯 <b>Target:</b> {target}\n"
-        f"🔗 <b>Active GCs:</b> <code>{threads_count} GCs</code>\n"
+        f"🔗 <b>Active GCs:</b> <code>{threads_count} GCs (2-3s Delay)</code>\n"
         f"📨 <b>Total Sent:</b> <code>{sent}</code>\n\n"
         "📝 <b>Live Log:</b>\n"
         f"<i>{event_text}</i>"
@@ -186,23 +186,23 @@ def send_message_with_retry(client, thread_id, message, task_id):
             client.direct_send(message, thread_ids=[thread_id])
             GLOBAL_MESSAGES_SENT += 1
             active_tasks[task_id]["msg_count"] += 1
-            update_task_log(task_id, f"✅ Sent message to GC: <code>{thread_id}</code>")
+            update_task_log(task_id, f"✅ Sent to GC: <code>{thread_id}</code>")
             return True
         except RateLimitError:
-            wait = 60 * attempt
+            wait = 40 * attempt
             update_task_log(task_id, f"⚠️ Rate Limit: Resting {wait}s")
             time.sleep(wait)
         except PleaseWaitFewMinutes:
-            time.sleep(150)
+            time.sleep(90)
         except ChallengeRequired:
             update_task_log(task_id, "🔒 Challenge Required! Pausing...")
-            time.sleep(1200)
+            time.sleep(600)
         except (ClientForbiddenError, LoginRequired):
             active_tasks[task_id]["running"] = False
             update_task_log(task_id, "🔐 Session Expired!")
             return False
         except Exception as e:
-            time.sleep(10)
+            time.sleep(5)
 
     return False
 
@@ -212,12 +212,12 @@ def worker_thread(task_id):
     thread_ids = task["thread_ids"]
     target_name = task["target_name"]
     
-    update_task_log(task_id, "🔄 Connecting session for multiple GCs...")
+    update_task_log(task_id, "🔄 Connecting session for safe sequential loop...")
     
     cl = Client()
     try:
         cl.login_by_sessionid(session_id)
-        update_task_log(task_id, f"✅ Logged in successfully!")
+        update_task_log(task_id, f"✅ Logged in! Starting 2-3s delay cycle...")
     except Exception as e:
         task["running"] = False
         update_task_log(task_id, f"❌ Login Failed: {str(e)[:40]}")
@@ -232,7 +232,7 @@ def worker_thread(task_id):
     while task.get("running", False):
         try:
             round_num += 1
-            update_task_log(task_id, f"🔄 Running Loop Round {round_num}...")
+            update_task_log(task_id, f"🔄 Cycle Round {round_num}...")
 
             for thread_id in thread_ids:
                 if not task.get("running", False):
@@ -241,7 +241,6 @@ def worker_thread(task_id):
                 # Footer with dynamic timer and signature
                 current_time = datetime.now().strftime("%H:%M:%S")
                 footer_signature = f"ꜱᴄʀɪᴩᴛ ᴍᴀᴅᴇ ʙʏ 𝐀ɴᴋɪᴛ अब्बू  [{current_time}]"
-                
                 full_msg = f"{msg_template}\n\n{footer_signature}"
 
                 success = send_message_with_retry(cl, thread_id, full_msg, task_id)
@@ -264,13 +263,14 @@ def worker_thread(task_id):
                     
                     thread_msg_counts[thread_id] = 0
 
-                delay = random.uniform(8, 14)
+                # 🔥 SAFE RANDOM DELAY: Exactly 2 to 3 seconds between each message 🔥
+                delay = random.uniform(2.0, 3.0)
                 time.sleep(delay)
 
             gc.collect()
 
         except Exception as e:
-            time.sleep(30)
+            time.sleep(10)
 
     update_task_log(task_id, "🛑 Task safely stopped.")
     gc.collect()
@@ -281,7 +281,7 @@ def worker_thread(task_id):
 def send_main_menu(chat_id, msg_to_edit=None):
     markup = types.InlineKeyboardMarkup(row_width=2)
     markup.add(
-        types.InlineKeyboardButton("🚀 Start High-Speed Task", callback_data="menu_start"),
+        types.InlineKeyboardButton("🚀 Start Safe Task", callback_data="menu_start"),
         types.InlineKeyboardButton("📊 System RAM/CPU", callback_data="menu_status")
     )
     if chat_id == ADMIN_ID:
@@ -415,7 +415,7 @@ def setup_flow(message):
 
 
 if __name__ == "__main__":
-    print("[ANKIT BOT] Online with Updated Admin ID! 👑 (Owner: Ankit अब्बू)")
+    print("[ANKIT BOT] Online with 2-3s Safe Random Delay Spammer! 👑 (Owner: Ankit अब्बू)")
     try:
         bot.infinity_polling()
     except KeyboardInterrupt:
