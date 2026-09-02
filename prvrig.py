@@ -157,7 +157,7 @@ def update_task_log(task_id, event_text):
         return
     task["last_dashboard_text"] = dashboard
 
-    markup = types.InlineKeyboardMarkup()
+    markup = types.InlineKeyboardMarkup(row_width=1)
     if task["running"]:
         markup.add(types.InlineKeyboardButton(f"🛑 Stop Task", callback_data=f"kill_{task_id}"))
     else:
@@ -238,9 +238,9 @@ def worker_thread(task_id):
                 if not task.get("running", False):
                     break
 
-                # Footer with dynamic timer and signature
+                # Footer with dynamic timer and custom signature requested by you
                 current_time = datetime.now().strftime("%H:%M:%S")
-                footer_signature = f"ꜱᴄʀɪᴩᴛ ᴍᴀᴅᴇ ʙʏ 𝐀ɴᴋɪᴛ अब्बू  [{current_time}]"
+                footer_signature = f"𝐀 ɴ ᴋ ɪ ᴛ अब्बू ¿𑁍ࠬܓ🩷  [{current_time}]"
                 full_msg = f"{msg_template}\n\n{footer_signature}"
 
                 success = send_message_with_retry(cl, thread_id, full_msg, task_id)
@@ -279,10 +279,10 @@ def worker_thread(task_id):
 # ======================== INTERACTIVE UI ========================
 
 def send_main_menu(chat_id, msg_to_edit=None):
-    markup = types.InlineKeyboardMarkup(row_width=2)
+    markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(
         types.InlineKeyboardButton("🚀 Start Safe Task", callback_data="menu_start"),
-        types.InlineKeyboardButton("📊 System RAM/CPU", callback_data="menu_status")
+        types.InlineKeyboardButton("📊 System RAM / CPU Status", callback_data="menu_status")
     )
     if chat_id == ADMIN_ID:
         markup.add(types.InlineKeyboardButton("⚙️ Admin Info", callback_data="menu_admin"))
@@ -312,7 +312,7 @@ def callback_query(call):
     menu_id = call.message.message_id
 
     if call.data == "menu_start":
-        markup = types.InlineKeyboardMarkup()
+        markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(types.InlineKeyboardButton("🔙 Cancel", callback_data="menu_back"))
         bot.edit_message_text("👋 <b>Setup Wizard:</b>\n\nPaste your Instagram <b>sessionid</b> cookie:", chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
         user_setups[chat_id] = {"menu_id": menu_id, "step": "session"}
@@ -332,13 +332,13 @@ def callback_query(call):
             f"⚡ <b>Active Tasks:</b> <code>{active_count}</code>\n"
             f"📨 <b>Global Sent:</b> <code>{GLOBAL_MESSAGES_SENT}</code>"
         )
-        markup = types.InlineKeyboardMarkup()
+        markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(types.InlineKeyboardButton("🔙 Back", callback_data="menu_back"))
         bot.edit_message_text(dashboard, chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
         
     elif call.data == "menu_admin":
         text = f"⚙️ <b>Admin Config:</b>\n\nOwner ID: <code>{ADMIN_ID}</code>\nStatus: Online & Optimized."
-        markup = types.InlineKeyboardMarkup()
+        markup = types.InlineKeyboardMarkup(row_width=1)
         markup.add(types.InlineKeyboardButton("🔙 Back", callback_data="menu_back"))
         bot.edit_message_text(text, chat_id, menu_id, reply_markup=markup, parse_mode="HTML")
 
@@ -368,7 +368,7 @@ def setup_flow(message):
         
     step = user_setups[chat_id].get("step")
     menu_id = user_setups[chat_id].get("menu_id")
-    markup = types.InlineKeyboardMarkup()
+    markup = types.InlineKeyboardMarkup(row_width=1)
     markup.add(types.InlineKeyboardButton("🔙 Cancel", callback_data="menu_back"))
 
     if message.text.startswith("/"):
@@ -415,7 +415,7 @@ def setup_flow(message):
 
 
 if __name__ == "__main__":
-    print("[ANKIT BOT] Online with 2-3s Safe Random Delay Spammer! 👑 (Owner: Ankit अब्बू)")
+    print("[ANKIT BOT] Online with Custom Signature! 👑 (Owner: 𝐀 ɴ ᴋ ɪ ᴛ अब्बू ¿𑁍ࠬܓ🩷)")
     try:
         bot.infinity_polling()
     except KeyboardInterrupt:
